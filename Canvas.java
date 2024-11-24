@@ -59,8 +59,11 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
     BufferedImage bufferedImage;
     Color colors = Color.black;
     Float stroke = (float) 5;
-    JComboBox<Color> colorComboBox;
+    JComboBox<String> colorComboBox;
     JComboBox<Float> strokeComboBox; // float로 설정해주는 이유는 setStroke에서 받는 인자 자료형이 float
+
+    String[] colorNames = {"검정", "빨강", "파랑", "초록", "노랑", "핑크", "마젠타"};
+    Color[] colorsArray = {Color.black, Color.red, Color.blue, Color.green, Color.yellow, Color.pink, Color.magenta};
 
     int width;
     int height;
@@ -69,9 +72,11 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
 
     public RectPanel() {
 
-        colorComboBox = new JComboBox<Color>();
+        colorComboBox = new JComboBox<>(colorNames);
         strokeComboBox = new JComboBox<Float>();
         JPanel toolPanel = new JPanel(new GridLayout(2,6));
+
+
         JButton eraseAllButton = new JButton("전체지우기");
         JButton rectButton = new JButton("네모");
         JButton lineButton = new JButton("선");
@@ -79,8 +84,8 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         JButton penButton = new JButton("펜");
         JButton eraseButton = new JButton("지우개");
 
-        colorComboBox.setModel(new DefaultComboBoxModel<Color>(new Color[] { Color.black, Color.red, Color.blue,
-                Color.green, Color.yellow, Color.pink, Color.magenta }));
+        //colorComboBox.setModel(new DefaultComboBoxModel<Color>(new Color[] { Color.black, Color.red, Color.blue,
+        //        Color.green, Color.yellow, Color.pink, Color.magenta }));
 
         strokeComboBox.setModel(new DefaultComboBoxModel<Float>(
                 new Float[] { (float) 5, (float) 10, (float) 15, (float) 20, (float) 25 }));
@@ -114,7 +119,7 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         strokeComboBox.addActionListener(this);
 
         setLayout(new BorderLayout());
-        bufferedImage = new BufferedImage(500, 400, BufferedImage.TYPE_INT_ARGB);
+        bufferedImage = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB);
         setImageBackground(bufferedImage); // save 할 때 배경이 default로 black이여서 흰색으로
         add(toolPanel, BorderLayout.SOUTH);
 
@@ -147,9 +152,15 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
             shapeString = e.getActionCommand();
         }
 
+        //else if (e.getSource().equals(colorComboBox)) {
+          //  colors = (Color) colorComboBox.getSelectedItem();
+        //}
+
         else if (e.getSource().equals(colorComboBox)) {
-            colors = (Color) colorComboBox.getSelectedItem();
+            int selectedIndex = colorComboBox.getSelectedIndex();
+            colors = colorsArray[selectedIndex]; // 선택된 색상 인덱스에 따라 색상 설정
         }
+
 
         else if (e.getSource().equals(strokeComboBox)) {
             stroke = (float) strokeComboBox.getSelectedItem();
@@ -231,7 +242,7 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         this.bufferedImage = bi;
         Graphics2D g = bufferedImage.createGraphics();
         g.setColor(Color.white);
-        g.fillRect(0, 0, 500, 400);
+        g.fillRect(0, 0, 500, 500);
         g.dispose();
     }
 
