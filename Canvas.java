@@ -12,43 +12,20 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 
 public class Canvas {
-
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
-
-    }
-
-    private static void createAndShowGUI() {
-        JFrame f = new JFrame("Swing Paint Demo");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    public JPanel canvasPanel(){
+        JPanel canvasPanel = new JPanel();
+        canvasPanel.setLayout(new BorderLayout());
         RectPanel rectPanel = new RectPanel();
-        f.add(rectPanel);
-        f.pack();
-        f.setVisible(true);
-
+        canvasPanel.add(rectPanel, BorderLayout.CENTER);
+        return canvasPanel;
     }
-
 }
 
 class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
@@ -76,16 +53,12 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         strokeComboBox = new JComboBox<Float>();
         JPanel toolPanel = new JPanel(new GridLayout(2,6));
 
-
         JButton eraseAllButton = new JButton("전체지우기");
         JButton rectButton = new JButton("네모");
         JButton lineButton = new JButton("선");
         JButton circleButton = new JButton("원");
         JButton penButton = new JButton("펜");
         JButton eraseButton = new JButton("지우개");
-
-        //colorComboBox.setModel(new DefaultComboBoxModel<Color>(new Color[] { Color.black, Color.red, Color.blue,
-        //        Color.green, Color.yellow, Color.pink, Color.magenta }));
 
         strokeComboBox.setModel(new DefaultComboBoxModel<Float>(
                 new Float[] { (float) 5, (float) 10, (float) 15, (float) 20, (float) 25 }));
@@ -98,7 +71,6 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         add(colorComboBox);
         add(strokeComboBox);
         add(eraseButton);
-
 
         toolPanel.add(eraseButton);
         toolPanel.add(eraseAllButton);
@@ -125,7 +97,6 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
 
         addMouseListener(this);
         addMouseMotionListener(this);
-
     }
 
     public void mousePressed(MouseEvent e) {
@@ -152,15 +123,10 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
             shapeString = e.getActionCommand();
         }
 
-        //else if (e.getSource().equals(colorComboBox)) {
-          //  colors = (Color) colorComboBox.getSelectedItem();
-        //}
-
         else if (e.getSource().equals(colorComboBox)) {
             int selectedIndex = colorComboBox.getSelectedIndex();
             colors = colorsArray[selectedIndex]; // 선택된 색상 인덱스에 따라 색상 설정
         }
-
 
         else if (e.getSource().equals(strokeComboBox)) {
             stroke = (float) strokeComboBox.getSelectedItem();

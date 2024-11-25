@@ -1,31 +1,21 @@
-//2071141 홍민혁
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Vector;
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
 public class WithChatServer extends JFrame{
     private int port;
@@ -38,16 +28,22 @@ public class WithChatServer extends JFrame{
     private JButton b_connect, b_disconnect, b_exit;
 
     public WithChatServer(int port) {
-        super("2071141 With ChatServer");
+        super("Server");
 
+        this.port = port;
         buildGUI();
+
+        acceptThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                startServer();
+            }
+        });
+        acceptThread.start();
 
         setBounds(600, 80, 400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
-
-        this.port = port;
-
     }
 
     private void buildGUI() {
@@ -68,54 +64,15 @@ public class WithChatServer extends JFrame{
 
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new GridLayout(1,0));
-        b_disconnect = new JButton("서버 종료");
-        b_connect = new JButton("서버 시작");
         b_exit = new JButton("종료");
-
-        b_disconnect.setEnabled(false);
-        b_connect.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                acceptThread = new Thread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        startServer();
-                    }
-                });
-                acceptThread.start();
-
-                b_connect.setEnabled(false);
-                b_disconnect.setEnabled(true);
-                b_exit.setEnabled(false);
-            }
-        });
-
-
-        b_disconnect.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                disconnect();
-
-                b_connect.setEnabled(true);
-                b_disconnect.setEnabled(false);
-                b_exit.setEnabled(true);
-            }
-        });
-
         b_exit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                disconnect();
                 System.exit(-1);
             }
         });
-
-        panel.add(b_connect);
-        panel.add(b_disconnect);
         panel.add(b_exit);
-
-        b_disconnect.setEnabled(false);
-
         return panel;
     }
 
@@ -170,7 +127,6 @@ public class WithChatServer extends JFrame{
 
     private class ClientHandler extends Thread{
         private Socket clientSocket;
-        //private BufferedWriter out;
         private ObjectOutputStream out;
 
         private String uid;
@@ -185,7 +141,6 @@ public class WithChatServer extends JFrame{
                 out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
                 String message;
-                //while((message = in.readLine()) != null) {
                 ChatMsg msg;
                 while((msg = (ChatMsg)in.readObject()) != null) {
                     if(msg.mode == ChatMsg.MODE_LOGIN) {
@@ -193,27 +148,35 @@ public class WithChatServer extends JFrame{
 
                         printDisplay("새 참가자: " + uid);
                         printDisplay("현재 참가자 수: " + users.size());
+
+                        // 모든 클라이언트에게 새 참가자 메시지를 방송
+                        ChatMsg joinMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 접속했습니다");
+                        broadcasting(joinMessage);
+
                         continue;
                     }
                     else if (msg.mode == ChatMsg.MODE_LOGOUT) {
+                        ChatMsg logoutMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
+                        broadcasting(logoutMessage);
                         break;
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_STRING) {
                         message = uid + ": " + msg.message;
-
                         printDisplay(message);
                         broadcasting(msg);
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_IMAGE) {
-                        printDisplay(uid + ": " + msg.message);
                         broadcasting(msg);
                     }
                 }
-
+                ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
+                broadcasting(logoutMessage);
                 users.removeElement(this);
                 printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
             }
             catch (IOException e) {
+                ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
+                broadcasting(logoutMessage);
                 users.removeElement(this);
                 printDisplay(uid + " 연결 끊김. 현재 참가자 수: " + users.size());
             } catch (ClassNotFoundException e) {
@@ -239,10 +202,6 @@ public class WithChatServer extends JFrame{
             }
         }
 
-        private void sendMessage(String msg) {
-            send(new ChatMsg(uid, ChatMsg.MODE_TX_STRING, msg));
-        }
-
         private void broadcasting(ChatMsg msg) {
             for(ClientHandler c : users) {
                 c.send(msg);
@@ -257,7 +216,7 @@ public class WithChatServer extends JFrame{
 
     public static void main(String[] args) {
         int port = 54321;
-        WithChatServer server  = new WithChatServer(port);
+        new WithChatServer(port);
     }
 
 }

@@ -1,4 +1,5 @@
-//2071141 홍민혁
+import com.sun.tools.javac.Main;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -7,17 +8,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataOutputStream;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -32,7 +29,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -40,17 +36,18 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 
 public class WithTalk extends JFrame {
-    private JTextField t_input;
-    //private JTextArea t_display;
-    private JTextPane t_display;
-    private DefaultStyledDocument document;
-    private JTextField t_userID, t_hostAddr, t_portNum;
 
+    private JTextField t_userID;
+    private JTextField t_input;
+    private JTextPane t_display;
+    private JButton b_select;
+    private DefaultStyledDocument document;
+
+    private JButton b_send = new JButton("보내기");
     private JButton b_connect = new JButton("접속하기");
     private JButton b_disconnect = new JButton("접속 끊기");
-    private JButton b_send = new JButton("보내기");
     private JButton b_exit = new JButton("종료하기");
-    private JButton b_select;
+
 
     private String serverAddress;
     private int serverPort;
@@ -61,8 +58,10 @@ public class WithTalk extends JFrame {
 
     private Thread receiveThread = null;
 
+    private MainDisplay mainDisplay;
+
     public WithTalk(String serverAddress, int serverPort) {
-        super("2071141 With Talk");
+        super("Skatch");
 
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
@@ -87,36 +86,11 @@ public class WithTalk extends JFrame {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         t_userID = new JTextField(7);
-        t_hostAddr = new JTextField(12);
-        t_portNum = new JTextField(5);
 
         t_userID.setText("guest" + getLocalAddr().split("\\.")[3]);
-        t_hostAddr.setText(this.serverAddress);
-        t_portNum.setText(String.valueOf(this.serverPort));
 
-        t_portNum.setHorizontalAlignment(JTextField.CENTER);
-
-        p.add(new JLabel("아이디: "));
+        p.add(new JLabel("닉네임: "));
         p.add(t_userID);
-
-        p.add(new JLabel("서버주소: "));
-        p.add(t_hostAddr);
-
-        p.add(new JLabel("포트번호: "));
-        p.add(t_portNum);
-
-        return p;
-    }
-
-    private JPanel createDisplayPanel() {
-        JPanel p = new JPanel(new BorderLayout());
-
-        document = new DefaultStyledDocument();
-        t_display = new JTextPane(document);
-
-        t_display.setEditable(false);
-
-        p.add(new JScrollPane(t_display), BorderLayout.CENTER);
 
         return p;
     }
@@ -175,6 +149,46 @@ public class WithTalk extends JFrame {
         return panel;
     }
 
+    private JPanel createDisplayPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+
+        document = new DefaultStyledDocument();
+        t_display = new JTextPane(document);
+
+        t_display.setEditable(false);
+
+        p.add(new JScrollPane(t_display), BorderLayout.CENTER);
+
+        return p;
+    }
+
+    private void printDisplay(String msg) {
+        int len = t_display.getDocument().getLength();
+
+        try {
+            document.insertString(len, msg + "\n" , null);
+        } catch (BadLocationException e){
+            e.printStackTrace();
+        }
+
+        t_display.setCaretPosition(len);
+    }
+
+    private void printDisplay(ImageIcon icon) {
+        t_display.setCaretPosition(t_display.getDocument().getLength());
+
+        if(icon.getIconWidth() > 400) {
+            Image img = icon.getImage();
+            Image changeImg = img.getScaledInstance(400, -1, Image.SCALE_SMOOTH);
+            icon = new ImageIcon(changeImg);
+        }
+
+        t_display.insertIcon(icon);
+
+        printDisplay("");
+        t_input.setText("");
+    }
+
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new GridLayout(0,3));
         panel.add(b_connect);
@@ -184,8 +198,6 @@ public class WithTalk extends JFrame {
         b_connect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                WithTalk.this.serverAddress = t_hostAddr.getText();
-                WithTalk.this.serverPort = Integer.parseInt(t_portNum.getText());
                 try {
                     connectToServer();
                     sendUserID();
@@ -227,32 +239,7 @@ public class WithTalk extends JFrame {
         return panel;
     }
 
-    private void printDisplay(String msg) {
-        int len = t_display.getDocument().getLength();
 
-        try {
-            document.insertString(len, msg + "\n" , null);
-        } catch (BadLocationException e){
-            e.printStackTrace();
-        }
-
-        t_display.setCaretPosition(len);
-    }
-
-    private void printDisplay(ImageIcon icon) {
-        t_display.setCaretPosition(t_display.getDocument().getLength());
-
-        if(icon.getIconWidth() > 400) {
-            Image img = icon.getImage();
-            Image changeImg = img.getScaledInstance(400, -1, Image.SCALE_SMOOTH);
-            icon = new ImageIcon(changeImg);
-        }
-
-        t_display.insertIcon(icon);
-
-        printDisplay("");
-        t_input.setText("");
-    }
 
     private String getLocalAddr() {
         InetAddress local = null;
@@ -296,7 +283,7 @@ public class WithTalk extends JFrame {
 
                         case ChatMsg.MODE_TX_IMAGE:
                             printDisplay(inMsg.userID + ": " + inMsg.message);
-                            printDisplay(inMsg.image);
+                            //printDisplay(inMsg.image);
                             break;
                     }
 
@@ -370,7 +357,7 @@ public class WithTalk extends JFrame {
         }
 
         ImageIcon icon = new ImageIcon(filename);
-        send(new ChatMsg(uid, ChatMsg.MODE_TX_IMAGE, file.getName(), icon));
+        //send(new ChatMsg(uid, ChatMsg.MODE_TX_IMAGE, file.getName(), icon));
 
         t_input.setText("");
     }
