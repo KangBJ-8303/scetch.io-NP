@@ -1,47 +1,42 @@
-//2071141홍민혁
 import java.io.Serializable;
-
 import javax.swing.ImageIcon;
 
 public class ChatMsg implements Serializable {
-    public final static int MODE_LOGIN		=	0x1;
-    public final static int MODE_LOGOUT		=	0x2;
-    public final static int MODE_TX_STRING	=  0x10;
-    public final static int MODE_TX_FILE	=  0x20;
-    public final static int MODE_TX_IMAGE	=  0x40;
+    public static final int MODE_LOGIN = 0x1;
+    public static final int MODE_LOGOUT = 0x2;
+    public static final int MODE_TX_STRING = 0x10;
+    public static final int MODE_TX_FILE = 0x20;
+    public static final int MODE_TX_IMAGE = 0x40;
+    public static final int MODE_TX_CANVAS = 0x80;
+
 
     String userID;
     int mode;
     String message;
     ImageIcon image;
-    long size;
+    byte[] canvasImageBytes;
 
-    public ChatMsg(String userID, int code, String message, ImageIcon image, long size) {
+    public ChatMsg(String userID, int mode) {
         this.userID = userID;
-        this.mode = code;
+        this.mode = mode;
+    }
+
+    public ChatMsg(String userID, int mode, String message) {
+        this.userID = userID;
+        this.mode = mode;
+        this.message = message;
+    }
+
+    public ChatMsg(String userID, int mode, String message, ImageIcon image) {
+        this.userID = userID;
+        this.mode = mode;
         this.message = message;
         this.image = image;
-        this.size = size;
     }
 
-    public ChatMsg(String userID, int code, String message, ImageIcon image) {
-        this(userID, code, message, image, 0);
+    public ChatMsg(String userID, int mode, byte[] canvasImageBytes) {
+        this.userID = userID;
+        this.mode = mode;
+        this.canvasImageBytes = canvasImageBytes;
     }
-
-    public ChatMsg(String userID, int code) {
-        this(userID, code, null, null);
-    }
-
-    public ChatMsg(String userID, int code, String message) {
-        this(userID, code, message, null);
-    }
-
-    public ChatMsg(String userID, int code, ImageIcon image) {
-        this(userID, code, null, image );
-    }
-
-    public ChatMsg(String userID, int code, String filename, long size) {
-        this(userID, code, filename, null, size);
-    }
-
 }
