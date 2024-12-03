@@ -88,15 +88,8 @@ public class WithTalk extends JFrame {
         rectPanel = new RectPanel();
         add(rectPanel, BorderLayout.EAST);
 
-        rectPanel.setOnPaintListener(image -> {
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(image, "png", baos);
-                byte[] imageBytes = baos.toByteArray();
-                send(new ChatMsg(uid, ChatMsg.MODE_TX_CANVAS, imageBytes));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        rectPanel.setOnPaintListener((startX, startY, endX, endY, color, stroke) -> {
+            send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAWING, startX, startY, endX, endY, color, stroke));
         });
     }
 
@@ -254,10 +247,11 @@ public class WithTalk extends JFrame {
         SocketAddress sa = new InetSocketAddress(serverAddress, serverPort);
         socket.connect(sa, 3000);
         out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        receiveThread = new Thread(new Runnable() {
-            private ObjectInputStream in;
-            private void receiveMessage() {
-                try {
+        out.flush();
+        receiveThread = new Thread(() -> {
+            try {
+                ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+                while (receiveThread == Thread.currentThread()) {
                     ChatMsg inMsg = (ChatMsg) in.readObject();
                     if (inMsg == null) {
                         disconnect();
@@ -275,24 +269,13 @@ public class WithTalk extends JFrame {
                         case ChatMsg.MODE_TX_CANVAS:
                             displayCanvasOnPanel(inMsg.canvasImageBytes);
                             break;
+                        case ChatMsg.MODE_TX_DRAWING:
+                            rectPanel.drawFromCoordinates(inMsg.startX, inMsg.startY, inMsg.endX, inMsg.endY, inMsg.color, inMsg.stroke);
+                            break;
                     }
-                } catch (IOException e) {
-                    printDisplay("연결을 종료했습니다.");
-                } catch (ClassNotFoundException e) {
-                    printDisplay("잘못된 객체가 전달되었습니다.");
                 }
-            }
-
-            @Override
-            public void run() {
-                try {
-                    in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-                } catch (IOException e) {
-                    printDisplay("입력 스트림이 열리지 않음");
-                }
-                while (receiveThread == Thread.currentThread()) {
-                    receiveMessage();
-                }
+            } catch (IOException | ClassNotFoundException e) {
+                printDisplay("연결을 종료했습니다.");
             }
         });
         receiveThread.start();
@@ -368,8 +351,17 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
 
     private OnPaintListener onPaintListener;
 
+    public void drawFromCoordinates(int startX, int startY, int endX, int endY, Color color, float stroke) {
+        Graphics2D g = bufferedImage.createGraphics();
+        g.setColor(color);
+        g.setStroke(new BasicStroke(stroke));
+        g.drawLine(startX, startY, endX, endY);
+        g.dispose();
+        repaint();
+    }
+
     public interface OnPaintListener {
-        void onPaint(BufferedImage image);
+        void onPaint(int startX, int startY, int endX, int endY, Color color, float stroke);
     }
 
     public void setOnPaintListener(OnPaintListener listener) {
@@ -445,15 +437,19 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
     }
 
     public void mousePressed(MouseEvent e) {
-        firstPointer.setLocation(0, 0);
-        secondPointer.setLocation(0, 0);
         firstPointer.setLocation(e.getX(), e.getY());
+        secondPointer.setLocation(0, 0);
     }
 
     public void mouseReleased(MouseEvent e) {
-        if (!shapeString.equals("펜")) {
+        if (!shapeString.equals("펜") && !shapeString.equals("지우개")) {
             secondPointer.setLocation(e.getX(), e.getY());
             updatePaint();
+            if (onPaintListener != null) {
+                onPaintListener.onPaint(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke);
+            }
+            firstPointer.setLocation(0, 0);
+            secondPointer.setLocation(0, 0);
         }
     }
 
@@ -519,7 +515,7 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         repaint();
 
         if (onPaintListener != null) {
-            onPaintListener.onPaint(bufferedImage);
+            onPaintListener.onPaint(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke);
         }
     }
 
@@ -547,6 +543,8 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
             if (secondPointer.x != 0 && secondPointer.y != 0) {
                 firstPointer.x = secondPointer.x;
                 firstPointer.y = secondPointer.y;
+            } else {
+                firstPointer.setLocation(e.getX(), e.getY());
             }
             secondPointer.setLocation(e.getX(), e.getY());
             updatePaint();

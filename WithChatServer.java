@@ -4,8 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,14 +11,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Vector;
-import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.ImageIcon;
-import java.awt.image.BufferedImage;
 
 public class WithChatServer extends JFrame {
     private int port;
@@ -158,41 +153,38 @@ public class WithChatServer extends JFrame {
             try {
                 ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
                 out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                out.flush();
 
                 ChatMsg msg;
                 while ((msg = (ChatMsg) in.readObject()) != null) {
-                    if (msg.mode == ChatMsg.MODE_LOGIN) {
-                        uid = msg.userID;
-                        printDisplay("새 참가자: " + uid);
-                        printDisplay("현재 참가자 수: " + users.size());
-                        continue;
-                    } else if (msg.mode == ChatMsg.MODE_LOGOUT) {
-                        break;
-                    } else if (msg.mode == ChatMsg.MODE_TX_STRING) {
-                        String message = uid + ": " + msg.message;
-                        printDisplay(message);
-                        broadcasting(msg);
-                    } else if (msg.mode == ChatMsg.MODE_TX_IMAGE) {
-                        printDisplay(uid + ": " + msg.message);
-                        broadcasting(msg);
-                    } else if (msg.mode == ChatMsg.MODE_TX_CANVAS) {
-                        broadcasting(msg);
+                    switch (msg.mode) {
+                        case ChatMsg.MODE_LOGIN:
+                            uid = msg.userID;
+                            printDisplay("새 참가자: " + uid);
+                            break;
+                        case ChatMsg.MODE_LOGOUT:
+                            return;
+                        case ChatMsg.MODE_TX_STRING:
+                            printDisplay(uid + ": " + msg.message);
+                            broadcasting(msg);
+                            break;
+                        case ChatMsg.MODE_TX_DRAWING:
+                            // 그림 모드 데이터 브로드캐스트
+                            broadcasting(msg);
+                            break;
                     }
                 }
 
                 users.removeElement(this);
                 printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 users.removeElement(this);
                 printDisplay(uid + " 연결 끊김. 현재 참가자 수: " + users.size());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             } finally {
                 try {
                     socket.close();
                 } catch (IOException e) {
                     System.err.println("서버 닫기 오류> " + e.getMessage());
-                    System.exit(-1);
                 }
             }
         }
