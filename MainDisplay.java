@@ -15,7 +15,6 @@ import java.util.ArrayList;
 public class MainDisplay extends JFrame {
 
     private String uid;
-
     private Socket socket;
     private ObjectOutputStream out;
 
@@ -30,7 +29,7 @@ public class MainDisplay extends JFrame {
     String serverAddress;
     int serverPort;
 
-    Canvas canvas;
+    private Canvas canvas;
 
     private JPanel userInfoPanel; // 사용자 정보를 보여줄 패널
     private ArrayList<String> userList;
@@ -70,8 +69,8 @@ public class MainDisplay extends JFrame {
         chatPanel.add(createDisplayPanel(), BorderLayout.CENTER);
         chatPanel.add(createInputPanel(), BorderLayout.SOUTH);
 
-        canvas = new Canvas();
-        paintPanel.add(canvas.canvasPanel(), BorderLayout.CENTER);
+        canvas = new Canvas(uid, this);
+        paintPanel.add(canvas, BorderLayout.CENTER);
 
         mainPanel.add(chatPanel, BorderLayout.EAST);
         mainPanel.add(paintPanel, BorderLayout.CENTER);
@@ -130,6 +129,9 @@ public class MainDisplay extends JFrame {
                             break;
                         case ChatMsg.MODE_TX_IMAGE:
                             printDisplay(inMsg.image);
+                            break;
+                        case ChatMsg.MODE_TX_DRAW:
+                            canvas.drawing(inMsg.x1, inMsg.y1,inMsg.x2,inMsg.y2,inMsg.color, inMsg.stroke, inMsg.shapeString);
                             break;
                     }
 
@@ -228,6 +230,10 @@ public class MainDisplay extends JFrame {
         } catch (IOException e) {
             System.err.println("클라이언트 일반 전송 오류> " + e.getMessage());
         }
+    }
+
+    public void sendDrawing(String uid, int x1, int y1, int x2, int y2, Color color, float stroke, String shapeString) {
+        send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAW, x1, y1, x2, y2, color, stroke, shapeString));
     }
 
     private void sendMessage() {

@@ -168,6 +168,9 @@ public class WithChatServer extends JFrame{
                     else if(msg.mode == ChatMsg.MODE_TX_IMAGE) {
                         broadcasting(msg);
                     }
+                    else if(msg.mode == ChatMsg.MODE_TX_DRAW) {
+                        broadcasting(msg);
+                    }
                 }
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                 broadcasting(logoutMessage);

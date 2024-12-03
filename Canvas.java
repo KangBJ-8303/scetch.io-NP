@@ -18,17 +18,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 
-public class Canvas {
-    public JPanel canvasPanel(){
-        JPanel canvasPanel = new JPanel();
-        canvasPanel.setLayout(new BorderLayout());
-        RectPanel rectPanel = new RectPanel();
-        canvasPanel.add(rectPanel, BorderLayout.CENTER);
-        return canvasPanel;
-    }
-}
-
-class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
+public class Canvas extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
 
     String shapeString = ""; // 도형의 형태를 담는 변수
     Point firstPointer = new Point(0, 0);
@@ -42,13 +32,17 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
     String[] colorNames = {"검정", "빨강", "파랑", "초록", "노랑", "핑크", "마젠타"};
     Color[] colorsArray = {Color.black, Color.red, Color.blue, Color.green, Color.yellow, Color.pink, Color.magenta};
 
+    String uid;
+    MainDisplay mainDisplay;
+
     int width;
     int height;
     int minPointx;
     int minPointy;
 
-    public RectPanel() {
-
+    public Canvas(String uid, MainDisplay mainDisplay) {
+        this.uid = uid;
+        this.mainDisplay = mainDisplay;
         colorComboBox = new JComboBox<>(colorNames);
         strokeComboBox = new JComboBox<Float>();
         JPanel toolPanel = new JPanel(new GridLayout(2,6));
@@ -99,6 +93,52 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         addMouseMotionListener(this);
     }
 
+    public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) {
+
+        width = Math.abs(secondX - firstX);
+        height = Math.abs(secondY - firstY);
+
+        minPointx = Math.min(firstX, secondX);
+        minPointy = Math.min(firstY, secondY);
+
+        Graphics2D g = bufferedImage.createGraphics();
+
+        switch (shapeString) {
+            case ("선"):
+                g.setColor(colors);
+                g.setStroke(new BasicStroke(stroke));
+                g.drawLine(firstX, firstY, secondX, secondY);
+                break;
+            case ("네모"):
+                g.setColor(colors);
+                g.setStroke(new BasicStroke(stroke));
+                g.drawRect(minPointx, minPointy, width, height);
+                break;
+            case ("원"):
+                g.setColor(colors);
+                g.setStroke(new BasicStroke(stroke));
+                g.drawOval(minPointx, minPointy, width, height);
+                break;
+            case ("펜"):
+                g.setColor(colors);
+                g.setStroke(new BasicStroke(stroke));
+                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+                break;
+            case ("지우개"):
+                g.setColor(Color.white);
+                g.setStroke(new BasicStroke(stroke));
+                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+                break;
+            case ("전체지우기"):
+                setImageBackground(bufferedImage);
+                break;
+            default:
+                break;
+        }
+        g.dispose();
+        repaint();
+    }
+
     public void mousePressed(MouseEvent e) {
 
         // 다시 클릭됐을경우 좌표 초기화
@@ -139,7 +179,6 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
     }
 
     public void updatePaint() {
-
         width = Math.abs(secondPointer.x - firstPointer.x);
         height = Math.abs(secondPointer.y - firstPointer.y);
 
@@ -147,7 +186,6 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
         minPointy = Math.min(firstPointer.y, secondPointer.y);
 
         Graphics2D g = bufferedImage.createGraphics();
-
         // draw on paintImage using Graphics
         switch (shapeString) {
 
@@ -155,47 +193,38 @@ class RectPanel extends JPanel implements ActionListener, MouseListener, MouseMo
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
-
                 break;
-
             case ("네모"):
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawRect(minPointx, minPointy, width, height);
-
                 break;
-
             case ("원"):
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawOval(minPointx, minPointy, width, height);
                 break;
-
             case ("펜"):
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
                 break;
-
             case ("지우개"):
                 g.setColor(Color.white);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
                 break;
-
             case ("전체지우기"):
                 setImageBackground(bufferedImage);
                 shapeString ="";
                 break;
-
             default:
                 break;
-
         }
-
         g.dispose();
-
         repaint();
+
+        mainDisplay.sendDrawing(uid ,firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
     }
 
     protected void paintComponent(Graphics g) {
