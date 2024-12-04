@@ -41,7 +41,7 @@ public class MainDisplay extends JFrame {
 
         buildGUI();
 
-        setBounds(200, 80, 1000, 600);
+        setBounds(200, 80, 1200, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         setVisible(true);
@@ -65,7 +65,7 @@ public class MainDisplay extends JFrame {
         userInfoPanel = createUserInfoPanel();
         userPanel.add(userInfoPanel, BorderLayout.CENTER);
 
-        chatPanel.setPreferredSize(new Dimension(300, 600));
+        chatPanel.setPreferredSize(new Dimension(500, 600));
         chatPanel.add(createDisplayPanel(), BorderLayout.CENTER);
         chatPanel.add(createInputPanel(), BorderLayout.SOUTH);
 
