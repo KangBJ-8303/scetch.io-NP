@@ -71,9 +71,6 @@ public class MainDisplay extends JFrame {
 
         canvas = new Canvas(uid, this);
         paintPanel.add(canvas, BorderLayout.CENTER);
-        canvas.setOnPaintListener((firstX, firstY, secondX, secondY, color, stroke, shapeString) -> {
-            send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAW, firstX, firstY, secondX, secondY, color, stroke, shapeString));
-        });
 
         mainPanel.add(chatPanel, BorderLayout.EAST);
         mainPanel.add(paintPanel, BorderLayout.CENTER);

@@ -20,16 +20,6 @@ import javax.swing.JPanel;
 
 public class Canvas extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
 
-    OnPaintListener onPaintListener;
-
-    public interface OnPaintListener {
-        void onPaint(int startX, int startY, int endX, int endY, Color color, float stroke, String shapeString);
-    }
-
-    public void setOnPaintListener(OnPaintListener listener) {
-        this.onPaintListener = listener;
-    }
-
     String shapeString = ""; // 도형의 형태를 담는 변수
     Point firstPointer = new Point(0, 0);
     Point secondPointer = new Point(0, 0);
@@ -165,9 +155,6 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         if (shapeString != "펜") {
             secondPointer.setLocation(e.getX(), e.getY());
             updatePaint();
-            if (onPaintListener != null) {
-                onPaintListener.onPaint(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
-            }
             firstPointer.setLocation(0, 0);
             secondPointer.setLocation(0, 0);
         }
@@ -199,6 +186,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
 
         Graphics2D g = bufferedImage.createGraphics();
         // draw on paintImage using Graphics
+        mainDisplay.sendDrawing(uid, firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
         switch (shapeString) {
             case ("선"):
                 g.setColor(colors);
@@ -235,9 +223,6 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         g.dispose();
         repaint();
 
-        if (onPaintListener != null) {
-            onPaintListener.onPaint(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
-        }
     }
 
     protected void paintComponent(Graphics g) {
