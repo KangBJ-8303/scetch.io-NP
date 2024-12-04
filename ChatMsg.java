@@ -42,6 +42,7 @@ public class ChatMsg implements Serializable {
         this.y2 = y2;
         this.color = color;
         this.stroke = stroke;
+        this.shapeString = shapeString;
     }
 
     public ChatMsg(String userID, int code, String message, BufferedImage image) {

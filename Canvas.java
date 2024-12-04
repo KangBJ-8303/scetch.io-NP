@@ -20,6 +20,16 @@ import javax.swing.JPanel;
 
 public class Canvas extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
 
+    OnPaintListener onPaintListener;
+
+    public interface OnPaintListener {
+        void onPaint(int startX, int startY, int endX, int endY, Color color, float stroke, String shapeString);
+    }
+
+    public void setOnPaintListener(OnPaintListener listener) {
+        this.onPaintListener = listener;
+    }
+
     String shapeString = ""; // 도형의 형태를 담는 변수
     Point firstPointer = new Point(0, 0);
     Point secondPointer = new Point(0, 0);
@@ -93,6 +103,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         addMouseMotionListener(this);
     }
 
+
     public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) {
 
         width = Math.abs(secondX - firstX);
@@ -139,14 +150,14 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         repaint();
     }
 
-    public void mousePressed(MouseEvent e) {
 
+
+    public void mousePressed(MouseEvent e) {
         // 다시 클릭됐을경우 좌표 초기화
         firstPointer.setLocation(0, 0);
         secondPointer.setLocation(0, 0);
 
         firstPointer.setLocation(e.getX(), e.getY());
-
     }
 
     public void mouseReleased(MouseEvent e) {
@@ -154,24 +165,25 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         if (shapeString != "펜") {
             secondPointer.setLocation(e.getX(), e.getY());
             updatePaint();
+            if (onPaintListener != null) {
+                onPaintListener.onPaint(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
+            }
+            firstPointer.setLocation(0, 0);
+            secondPointer.setLocation(0, 0);
         }
     }
 
     public void actionPerformed(ActionEvent e) {
-
         if (e.getSource().getClass().toString().contains("JButton")) {
             shapeString = e.getActionCommand();
         }
-
         else if (e.getSource().equals(colorComboBox)) {
             int selectedIndex = colorComboBox.getSelectedIndex();
             colors = colorsArray[selectedIndex]; // 선택된 색상 인덱스에 따라 색상 설정
         }
-
         else if (e.getSource().equals(strokeComboBox)) {
             stroke = (float) strokeComboBox.getSelectedItem();
         }
-
     }
 
     public Dimension getPreferredSize() {
@@ -188,7 +200,6 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         Graphics2D g = bufferedImage.createGraphics();
         // draw on paintImage using Graphics
         switch (shapeString) {
-
             case ("선"):
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
@@ -224,7 +235,9 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         g.dispose();
         repaint();
 
-        mainDisplay.sendDrawing(uid ,firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
+        if (onPaintListener != null) {
+            onPaintListener.onPaint(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
+        }
     }
 
     protected void paintComponent(Graphics g) {
@@ -251,8 +264,6 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         minPointx = Math.min(firstPointer.x, secondPointer.x);
         minPointy = Math.min(firstPointer.y, secondPointer.y);
 
-
-
         if (shapeString == "펜" | shapeString == "지우개") {
             if (secondPointer.x != 0 && secondPointer.y != 0) {
                 firstPointer.x = secondPointer.x;
@@ -261,62 +272,35 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
             secondPointer.setLocation(e.getX(), e.getY());
             updatePaint();
         } else if (shapeString == "선") {
-
             Graphics g = getGraphics();
-
-
             g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
             secondPointer.setLocation(e.getX(), e.getY());
             repaint();
             g.dispose();
         } else if (shapeString == "네모") {
-
             Graphics g = getGraphics();
             g.setColor(Color.BLACK);
             g.setXORMode(getBackground());
-
             g.drawRect(minPointx, minPointy, width, height);
             secondPointer.setLocation(e.getX(), e.getY());
             repaint();
             g.dispose();
         } else if (shapeString == "원") {
-
             Graphics g = getGraphics();
             g.setColor(Color.BLACK);
             g.setXORMode(getBackground());
-
             g.drawOval(minPointx, minPointy, width, height);
             secondPointer.setLocation(e.getX(), e.getY());
-
             g.dispose();
             repaint();
         }
-
-
     }
-
     @Override
-    public void mouseMoved(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
+    public void mouseMoved(MouseEvent e) {}
     @Override
-    public void mouseClicked(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
+    public void mouseClicked(MouseEvent e) {}
     @Override
-    public void mouseEntered(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
+    public void mouseEntered(MouseEvent e) {}
     @Override
-    public void mouseExited(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
+    public void mouseExited(MouseEvent e) {}
 }// Class dotButton

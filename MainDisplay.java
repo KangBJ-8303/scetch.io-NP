@@ -41,7 +41,7 @@ public class MainDisplay extends JFrame {
 
         buildGUI();
 
-        setBounds(200, 80, 900, 600);
+        setBounds(200, 80, 1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         setVisible(true);
@@ -65,12 +65,15 @@ public class MainDisplay extends JFrame {
         userInfoPanel = createUserInfoPanel();
         userPanel.add(userInfoPanel, BorderLayout.CENTER);
 
-        chatPanel.setPreferredSize(new Dimension(200, 600));
+        chatPanel.setPreferredSize(new Dimension(300, 600));
         chatPanel.add(createDisplayPanel(), BorderLayout.CENTER);
         chatPanel.add(createInputPanel(), BorderLayout.SOUTH);
 
         canvas = new Canvas(uid, this);
         paintPanel.add(canvas, BorderLayout.CENTER);
+        canvas.setOnPaintListener((firstX, firstY, secondX, secondY, color, stroke, shapeString) -> {
+            send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAW, firstX, firstY, secondX, secondY, color, stroke, shapeString));
+        });
 
         mainPanel.add(chatPanel, BorderLayout.EAST);
         mainPanel.add(paintPanel, BorderLayout.CENTER);
@@ -132,6 +135,8 @@ public class MainDisplay extends JFrame {
                             break;
                         case ChatMsg.MODE_TX_DRAW:
                             canvas.drawing(inMsg.x1, inMsg.y1,inMsg.x2,inMsg.y2,inMsg.color, inMsg.stroke, inMsg.shapeString);
+                            printDisplay("Client x1: " +Integer.toString(inMsg.x1) + " x2: " + Integer.toString(inMsg.x2) + " y1: " + Integer.toString(inMsg.y1) + " y2: " + Integer.toString(inMsg.y2) +
+                                    " stroke: " + Float.toString(inMsg.stroke) +  " shape: " + inMsg.shapeString);
                             break;
                     }
 

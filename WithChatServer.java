@@ -41,7 +41,7 @@ public class WithChatServer extends JFrame{
         });
         acceptThread.start();
 
-        setBounds(600, 80, 400, 300);
+        setBounds(600, 80, 900, 900);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -170,6 +170,8 @@ public class WithChatServer extends JFrame{
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_DRAW) {
                         broadcasting(msg);
+                        printDisplay("Server x1: " +Integer.toString(msg.x1) + " x2: " + Integer.toString(msg.x2) + " y1: " + Integer.toString(msg.y1) + " y2: " + Integer.toString(msg.y2) +
+                               " stroke: " + Float.toString(msg.stroke) +  " shape: " + msg.shapeString);
                     }
                 }
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
