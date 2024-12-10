@@ -31,13 +31,16 @@ public class MainDisplay extends JFrame {
 
     private Canvas canvas;
 
-    private JPanel userInfoPanel; // 사용자 정보를 보여줄 패널
+    private JPanel userInfoPanel;
     private ArrayList<String> userList;
 
     public MainDisplay(String serverAddress, int serverPort, String uid) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.uid = uid;
+        this.userList = new ArrayList<>();
+        this.userInfoPanel = new JPanel(new BorderLayout());
+        userList.add(uid);
 
         buildGUI();
 
@@ -82,10 +85,11 @@ public class MainDisplay extends JFrame {
     private JPanel createUserInfoPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(userInfoPanel);
         return panel;
     }
 
-    public void addUserInfo(String userName) {
+    private void addUserInfo(String userName) {
         JLabel userLabel = new JLabel(userName); // 사용자 이름을 JLabel로 생성
         userInfoPanel.add(userLabel); // 패널에 추가
         userInfoPanel.revalidate(); // 레이아웃 갱신
@@ -127,13 +131,14 @@ public class MainDisplay extends JFrame {
                         case ChatMsg.MODE_ENTER :
                             printDisplay(inMsg.message);
                             break;
+                        case ChatMsg.MODE_TX_USER:
+                            userList.add(inMsg.userID);
+                            break;
                         case ChatMsg.MODE_TX_IMAGE:
                             printDisplay(inMsg.image);
                             break;
                         case ChatMsg.MODE_TX_DRAW:
                             canvas.drawing(inMsg.x1, inMsg.y1,inMsg.x2,inMsg.y2,inMsg.color, inMsg.stroke, inMsg.shapeString);
-                            printDisplay("Client x1: " +Integer.toString(inMsg.x1) + " x2: " + Integer.toString(inMsg.x2) + " y1: " + Integer.toString(inMsg.y1) + " y2: " + Integer.toString(inMsg.y2) +
-                                    " stroke: " + Float.toString(inMsg.stroke) +  " shape: " + inMsg.shapeString);
                             break;
                     }
 
@@ -249,5 +254,6 @@ public class MainDisplay extends JFrame {
 
     private void sendUserID() {
         send(new ChatMsg(uid, ChatMsg.MODE_LOGIN));
+        send(new ChatMsg(uid, userList, ChatMsg.MODE_TX_USER));
     }
 }

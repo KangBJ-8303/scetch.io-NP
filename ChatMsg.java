@@ -2,6 +2,7 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 
@@ -12,7 +13,7 @@ public class ChatMsg implements Serializable {
     public final static int MODE_TX_STRING	=  0x10;
     public final static int MODE_TX_IMAGE	=  0x40;
     public final static int MODE_TX_DRAW	=  0x80;
-
+    public final static int MODE_TX_USER    =  0x99;
     String userID;
     int mode;
     String message;
@@ -24,6 +25,7 @@ public class ChatMsg implements Serializable {
     float stroke;
     public int x1, y1, x2, y2;
     String shapeString;
+    ArrayList<String> users;
 
     public ChatMsg(String userID, int mode, String message, BufferedImage image, long size) {
         this.userID = userID;
@@ -43,6 +45,11 @@ public class ChatMsg implements Serializable {
         this.color = color;
         this.stroke = stroke;
         this.shapeString = shapeString;
+    }
+
+    public ChatMsg(String userID, ArrayList<String> users, int mode){
+        this.users = users;
+        this.mode = mode;
     }
 
     public ChatMsg(String userID, int code, String message, BufferedImage image) {

@@ -123,12 +123,12 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
             case ("펜"):
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
-                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+                g.drawLine(firstX, firstY, secondX, secondY);
                 break;
             case ("지우개"):
                 g.setColor(Color.white);
                 g.setStroke(new BasicStroke(stroke));
-                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+                g.drawLine(firstX, firstY, secondX, secondY);
                 break;
             case ("전체지우기"):
                 setImageBackground(bufferedImage);
