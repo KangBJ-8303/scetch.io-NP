@@ -12,8 +12,17 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.rmi.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainDisplay extends JFrame {
+
+    private static final Color[] USER_COLORS = {Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE}; // 색상 배열
+    private static final Color[] USER_TEXT_COLORS = {Color.WHITE, Color.BLACK, Color.WHITE, Color.BLACK};
+    private Map<String, Integer> userColorMap = new HashMap<>(); // 사용자 ID와 색상 인덱스 매핑
+    private int colorIndex = 0;
+
+
 
     private String uid;
     private Socket socket;
@@ -87,22 +96,25 @@ public class MainDisplay extends JFrame {
         return panel;
     }
 
+
+
+
     public void addUserInfo(String userName) {
-        JLabel userLabel = new JLabel(userName); // 사용자 이름을 JLabel로 생성
-        userLabel.setPreferredSize(new Dimension(200, 120));
-        userLabel.setMaximumSize(new Dimension(200, 120));
+        if (!userColorMap.containsKey(userName)) {
+            userColorMap.put(userName, colorIndex);
+            colorIndex++;
+        }
 
-        Border border = BorderFactory.createLineBorder(Color.BLACK, 1); // 테두리 생성 userLabel.setBorder(border);
-        userLabel.setBorder(border);
-
-        userLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        userLabel.setFont(new Font("Serif", Font.BOLD, 20));
-
-        userInfoPanel.add(userLabel); // 패널에 추가
+        int userColorIndex = userColorMap.get(userName) % USER_COLORS.length;
+        Color userColor = USER_COLORS[userColorIndex];
+        Color userTextColor = USER_TEXT_COLORS[userColorIndex];
+        RoundedLabel roundedLabel = new RoundedLabel(userName, userColor, userTextColor); // 사용자 정의 패널 생성
+        userInfoPanel.add(roundedLabel); // 패널에 추가
         userInfoPanel.revalidate(); // 레이아웃 갱신
         userInfoPanel.repaint(); // 화면 갱신
     }
+
+
 
 
     private JPanel createDisplayPanel() {
@@ -272,4 +284,40 @@ public class MainDisplay extends JFrame {
         send(new ChatMsg(uid, ChatMsg.MODE_LOGIN));
         send(new ChatMsg(uid, ChatMsg.MODE_TX_USER, userList));
     }
+
+    public class RoundedLabel extends JPanel {
+        private String text;
+        private Color backgroundColor;
+        private Color textColor;
+
+        public RoundedLabel(String text, Color backgroundColor, Color textColor) {
+            this.text = text;
+            this.backgroundColor = backgroundColor;
+            this.textColor = textColor;
+            setOpaque(false); // 배경 투명 설정
+            setPreferredSize(new Dimension(190, 100)); // 패널 크기 설정
+            setMaximumSize(new Dimension(190, 100)); // 최대 크기 설정
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(backgroundColor); // 배경색 설정
+            g2.fillRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20); // 둥근 사각형 그리기
+            g2.setColor(Color.BLACK); // 테두리 색상 설정
+            g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20); // 둥근 테두리 그리기
+
+            FontMetrics fm = g2.getFontMetrics();
+            int x = (getWidth() - fm.stringWidth(text)) / 2;
+            int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
+
+            g2.setColor(textColor);
+            g2.setFont(new Font("Serif", Font.BOLD, 20)); // 글자 크기 및 굵기 설정
+            g2.drawString(text, x - 10, y); // 텍스트 그리기
+        }
+    }
+
+
 }
