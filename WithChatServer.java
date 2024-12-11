@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -23,6 +24,7 @@ public class WithChatServer extends JFrame{
 
     private Thread acceptThread = null;
     private Vector<ClientHandler> users = new Vector<ClientHandler>();
+    private ArrayList<String> userIDs = new ArrayList<>();
 
     private JTextArea t_display;
     private JButton b_connect, b_disconnect, b_exit;
@@ -145,7 +147,7 @@ public class WithChatServer extends JFrame{
                 while((msg = (ChatMsg)in.readObject()) != null) {
                     if(msg.mode == ChatMsg.MODE_LOGIN) {
                         uid = msg.userID;
-
+                        userIDs.add(uid);
                         printDisplay("새 참가자: " + uid);
                         printDisplay("현재 참가자 수: " + users.size());
 
@@ -156,8 +158,12 @@ public class WithChatServer extends JFrame{
                         continue;
                     }
                     else if (msg.mode == ChatMsg.MODE_LOGOUT) {
+                        userIDs.remove(uid);
                         ChatMsg logoutMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                         broadcasting(logoutMessage);
+
+                        ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
+                        broadcasting(userUpdateMessage);
                         break;
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_STRING) {
@@ -170,12 +176,18 @@ public class WithChatServer extends JFrame{
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_DRAW) {
                         broadcasting(msg);
-                        printDisplay("uid: " + msg.userID + " x1: " +Integer.toString(msg.x1) + " x2: " + Integer.toString(msg.x2) + " y1: " + Integer.toString(msg.y1) + " y2: " + Integer.toString(msg.y2) +
+                        printDisplay("Server x1: " +Integer.toString(msg.x1) + " x2: " + Integer.toString(msg.x2) + " y1: " + Integer.toString(msg.y1) + " y2: " + Integer.toString(msg.y2) +
                                 " stroke: " + Float.toString(msg.stroke) +  " shape: " + msg.shapeString);
                     }
+                    else if(msg.mode == ChatMsg.MODE_TX_USER) {
+
+                        for(String user : userIDs){
+                            printDisplay("userList : " + user);
+                        }
+                        ChatMsg userID = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
+                        broadcasting(userID);
+                    }
                 }
-                ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
-                broadcasting(logoutMessage);
                 users.removeElement(this);
                 printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
             }
@@ -183,7 +195,13 @@ public class WithChatServer extends JFrame{
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                 broadcasting(logoutMessage);
                 users.removeElement(this);
+                userIDs.remove(uid);
+                ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
+                broadcasting(userUpdateMessage);
                 printDisplay(uid + " 연결 끊김. 현재 참가자 수: " + users.size());
+                for(String user : userIDs){
+                    printDisplay("userList : " + user);
+                }
             } catch (ClassNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

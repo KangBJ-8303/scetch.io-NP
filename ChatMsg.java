@@ -47,7 +47,8 @@ public class ChatMsg implements Serializable {
         this.shapeString = shapeString;
     }
 
-    public ChatMsg(String userID, ArrayList<String> users, int mode){
+    public ChatMsg(String userID, int mode, ArrayList<String> users){
+        this.userID = userID;
         this.users = users;
         this.mode = mode;
     }

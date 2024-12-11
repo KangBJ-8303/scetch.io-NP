@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import java.awt.*;
@@ -31,15 +32,13 @@ public class MainDisplay extends JFrame {
 
     private Canvas canvas;
 
-    private JPanel userInfoPanel;
-    private ArrayList<String> userList;
+    private JPanel userInfoPanel; // 사용자 정보를 보여줄 패널
+    private ArrayList<String> userList = new ArrayList<>();
 
     public MainDisplay(String serverAddress, int serverPort, String uid) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.uid = uid;
-        this.userList = new ArrayList<>();
-        this.userInfoPanel = new JPanel(new BorderLayout());
         userList.add(uid);
 
         buildGUI();
@@ -85,12 +84,21 @@ public class MainDisplay extends JFrame {
     private JPanel createUserInfoPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.add(userInfoPanel);
         return panel;
     }
 
-    private void addUserInfo(String userName) {
+    public void addUserInfo(String userName) {
         JLabel userLabel = new JLabel(userName); // 사용자 이름을 JLabel로 생성
+        userLabel.setPreferredSize(new Dimension(200, 120));
+        userLabel.setMaximumSize(new Dimension(200, 120));
+
+        Border border = BorderFactory.createLineBorder(Color.BLACK, 1); // 테두리 생성 userLabel.setBorder(border);
+        userLabel.setBorder(border);
+
+        userLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        userLabel.setFont(new Font("Serif", Font.BOLD, 20));
+
         userInfoPanel.add(userLabel); // 패널에 추가
         userInfoPanel.revalidate(); // 레이아웃 갱신
         userInfoPanel.repaint(); // 화면 갱신
@@ -112,8 +120,6 @@ public class MainDisplay extends JFrame {
         socket.connect(sa,3000);
 
         out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        //in = new BufferedReader(new InputStreamReader(socket.getInputStream(),"UTF-8"));
-
         receiveThread = new Thread(new Runnable() {
             private ObjectInputStream in;
 
@@ -131,14 +137,24 @@ public class MainDisplay extends JFrame {
                         case ChatMsg.MODE_ENTER :
                             printDisplay(inMsg.message);
                             break;
-                        case ChatMsg.MODE_TX_USER:
-                            userList.add(inMsg.userID);
-                            break;
                         case ChatMsg.MODE_TX_IMAGE:
                             printDisplay(inMsg.image);
                             break;
                         case ChatMsg.MODE_TX_DRAW:
                             canvas.drawing(inMsg.x1, inMsg.y1,inMsg.x2,inMsg.y2,inMsg.color, inMsg.stroke, inMsg.shapeString);
+                            break;
+                        case ChatMsg.MODE_TX_USER:
+                            userList.clear();
+                            userList.addAll(inMsg.users);
+                            userInfoPanel.removeAll();
+
+                            printDisplay("userList Size: " + userList.size());
+                            for(String user : userList){
+                                addUserInfo(user);
+                                printDisplay("userList : " + user);
+                            }
+                            userInfoPanel.revalidate();
+                            userInfoPanel.repaint();
                             break;
                     }
 
@@ -254,6 +270,6 @@ public class MainDisplay extends JFrame {
 
     private void sendUserID() {
         send(new ChatMsg(uid, ChatMsg.MODE_LOGIN));
-        send(new ChatMsg(uid, userList, ChatMsg.MODE_TX_USER));
+        send(new ChatMsg(uid, ChatMsg.MODE_TX_USER, userList));
     }
 }
