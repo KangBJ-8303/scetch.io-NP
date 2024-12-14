@@ -29,6 +29,8 @@ public class WithChatServer extends JFrame{
     private JTextArea t_display;
     private JButton b_connect, b_disconnect, b_exit;
 
+    private int orderIndex;
+
     public WithChatServer(int port) {
         super("Server");
 
@@ -186,6 +188,13 @@ public class WithChatServer extends JFrame{
                         }
                         ChatMsg userID = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
                         broadcasting(userID);
+                    }
+                    else if(msg.mode == ChatMsg.MODE_TX_ORDER) {
+                        orderIndex = msg.order;
+                        broadcasting(msg);
+                    }
+                    else if(msg.mode == ChatMsg.MODE_TX_START) {
+                        broadcasting(msg);
                     }
                 }
                 users.removeElement(this);

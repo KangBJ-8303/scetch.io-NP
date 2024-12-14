@@ -14,6 +14,9 @@ public class ChatMsg implements Serializable {
     public final static int MODE_TX_IMAGE	=  0x40;
     public final static int MODE_TX_DRAW	=  0x80;
     public final static int MODE_TX_USER    =  0x99;
+    public final static int MODE_TX_ORDER   =  0x100;
+    public final static int MODE_TX_START   =  0x200;
+
     String userID;
     int mode;
     String message;
@@ -26,6 +29,7 @@ public class ChatMsg implements Serializable {
     public int x1, y1, x2, y2;
     String shapeString;
     ArrayList<String> users;
+    int order;
 
     public ChatMsg(String userID, int mode, String message, BufferedImage image, long size) {
         this.userID = userID;
@@ -55,6 +59,12 @@ public class ChatMsg implements Serializable {
 
     public ChatMsg(String userID, int code, String message, BufferedImage image) {
         this(userID, code, message, image, 0);
+    }
+
+    public ChatMsg(String userID, int code, int order){
+        this.userID = userID;
+        this.mode = code;
+        this.order =order;
     }
 
     public ChatMsg(String userID, int code) {

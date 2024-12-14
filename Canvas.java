@@ -40,19 +40,44 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
     int minPointx;
     int minPointy;
 
+    private JPanel toolPanel;
+
+    JButton eraseAllButton = new JButton("전체지우기");
+    JButton rectButton = new JButton("네모");
+    JButton lineButton = new JButton("선");
+    JButton circleButton = new JButton("원");
+    JButton penButton = new JButton("펜");
+    JButton eraseButton = new JButton("지우개");
+
     public Canvas(String uid, MainDisplay mainDisplay) {
         this.uid = uid;
         this.mainDisplay = mainDisplay;
         colorComboBox = new JComboBox<>(colorNames);
         strokeComboBox = new JComboBox<Float>();
-        JPanel toolPanel = new JPanel(new GridLayout(2,6));
+        toolPanel = createToolPanel();
+        notOrder();
+    }
 
-        JButton eraseAllButton = new JButton("전체지우기");
-        JButton rectButton = new JButton("네모");
-        JButton lineButton = new JButton("선");
-        JButton circleButton = new JButton("원");
-        JButton penButton = new JButton("펜");
-        JButton eraseButton = new JButton("지우개");
+    private void Order(){
+        eraseAllButton.setEnabled(true);
+        rectButton.setEnabled(true);
+        lineButton.setEnabled(true);
+        circleButton.setEnabled(true);
+        penButton.setEnabled(true);
+        eraseButton.setEnabled(true);
+    }
+
+    private void notOrder(){
+        eraseAllButton.setEnabled(false);
+        rectButton.setEnabled(false);
+        lineButton.setEnabled(false);
+        circleButton.setEnabled(false);
+        penButton.setEnabled(false);
+        eraseButton.setEnabled(false);
+    }
+
+    private JPanel createToolPanel() {
+        JPanel panel = new JPanel(new GridLayout(2,6));
 
         strokeComboBox.setModel(new DefaultComboBoxModel<Float>(
                 new Float[] { (float) 5, (float) 10, (float) 15, (float) 20, (float) 25 }));
@@ -66,14 +91,14 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         add(strokeComboBox);
         add(eraseButton);
 
-        toolPanel.add(eraseButton);
-        toolPanel.add(eraseAllButton);
-        toolPanel.add(rectButton);
-        toolPanel.add(lineButton);
-        toolPanel.add(circleButton);
-        toolPanel.add(penButton);
-        toolPanel.add(colorComboBox);
-        toolPanel.add(strokeComboBox);
+        panel.add(eraseButton);
+        panel.add(eraseAllButton);
+        panel.add(rectButton);
+        panel.add(lineButton);
+        panel.add(circleButton);
+        panel.add(penButton);
+        panel.add(colorComboBox);
+        panel.add(strokeComboBox);
 
         eraseAllButton.addActionListener(this);
         rectButton.addActionListener(this);
@@ -87,12 +112,25 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         setLayout(new BorderLayout());
         bufferedImage = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB);
         setImageBackground(bufferedImage); // save 할 때 배경이 default로 black이여서 흰색으로
-        add(toolPanel, BorderLayout.SOUTH);
+        add(panel, BorderLayout.SOUTH);
 
         addMouseListener(this);
         addMouseMotionListener(this);
+
+        return panel;
     }
 
+    public void updateToolVisibility(){
+        if(mainDisplay.getCurrentDrawer().equals(mainDisplay.getUid())){
+            Order();
+            mainDisplay.printDisplay("true");
+        }
+        else {
+            notOrder();
+            mainDisplay.printDisplay("false");
+        }
+
+    }
 
     public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) {
 
@@ -140,7 +178,9 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         repaint();
     }
 
-
+    public void setClean() {
+        setImageBackground(bufferedImage);
+    }
 
     public void mousePressed(MouseEvent e) {
         // 다시 클릭됐을경우 좌표 초기화
