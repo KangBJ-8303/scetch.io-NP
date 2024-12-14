@@ -183,7 +183,7 @@ public class WithChatServer extends JFrame{
                         if(correctAnswer(msg.message)) {
                             ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT);
                             printDisplay(uid + "에게 점수 1점");
-                            printDisplay(userIDs.get(orderIndex) +"에게 점수 1점");
+                            printDisplay(userIDs.get(orderIndex % users.size()) +"에게 점수 1점");
                             broadcasting(addScore);
                         }
                     }
@@ -204,8 +204,9 @@ public class WithChatServer extends JFrame{
                         broadcasting(userID);
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_ORDER) {
-                        orderIndex = msg.order;
-                        broadcasting(msg);
+                        orderIndex = msg.order + 1;
+                        ChatMsg newMsg = new ChatMsg(uid , ChatMsg.MODE_TX_ORDER, orderIndex);
+                        broadcasting(newMsg);
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_START) {
                         selectedWord = msg.message;

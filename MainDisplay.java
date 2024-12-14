@@ -107,7 +107,7 @@ public class MainDisplay extends JFrame {
         b_start.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
+                send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, -1));
                 b_start.setVisible(false);
             }
         });
@@ -248,11 +248,8 @@ public class MainDisplay extends JFrame {
     public void nextDrawer() {
         if (uid.equals(currentDrawer)) {
             t_input.setEnabled(true);
+            send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
         }
-
-        orderIndex++;
-        printDisplay("지금 순서: " + Integer.toString(orderIndex % userList.size()));
-        send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
     }
 
 
@@ -296,6 +293,9 @@ public class MainDisplay extends JFrame {
         if(userList.size() >= 2) {
             if(uid.equals(userList.get(0))) {
                 b_start.setEnabled(true);
+            }
+            else {
+                b_start.setVisible(false);
             }
         }
         else {
@@ -353,7 +353,8 @@ public class MainDisplay extends JFrame {
                             break;
                         case ChatMsg.MODE_TX_ORDER:
                             vocaPanel.setVisible(false);
-                            orderIndex = inMsg.order;
+                            orderIndex = inMsg.order % userList.size();
+                            printDisplay("지금턴 index: " + orderIndex);
                             setCurrentDrawer(userList.get(orderIndex));
                             startDrawing();
                             break;
