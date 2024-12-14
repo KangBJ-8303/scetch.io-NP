@@ -30,6 +30,7 @@ public class WithChatServer extends JFrame{
     private JButton b_connect, b_disconnect, b_exit;
 
     private int orderIndex;
+    private String selectedWord;
 
     public WithChatServer(int port) {
         super("Server");
@@ -128,6 +129,13 @@ public class WithChatServer extends JFrame{
         t_display.setCaretPosition(t_display.getDocument().getLength());
     }
 
+    private boolean correctAnswer(String msg) {
+        if(selectedWord.equals(msg))
+            return true;
+        else
+            return false;
+    }
+
 
     private class ClientHandler extends Thread{
         private Socket clientSocket;
@@ -172,6 +180,12 @@ public class WithChatServer extends JFrame{
                         message = uid + ": " + msg.message;
                         printDisplay(message);
                         broadcasting(msg);
+                        if(correctAnswer(msg.message)) {
+                            ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT);
+                            printDisplay(uid + "에게 점수 1점");
+                            printDisplay(userIDs.get(orderIndex) +"에게 점수 1점");
+                            broadcasting(addScore);
+                        }
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_IMAGE) {
                         broadcasting(msg);
@@ -194,17 +208,19 @@ public class WithChatServer extends JFrame{
                         broadcasting(msg);
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_START) {
+                        selectedWord = msg.message;
                         broadcasting(msg);
                     }
                 }
+                userIDs.remove(uid);
                 users.removeElement(this);
                 printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
             }
             catch (IOException e) {
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                 broadcasting(logoutMessage);
-                users.removeElement(this);
                 userIDs.remove(uid);
+                users.removeElement(this);
                 ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
                 broadcasting(userUpdateMessage);
                 printDisplay(uid + " 연결 끊김. 현재 참가자 수: " + users.size());

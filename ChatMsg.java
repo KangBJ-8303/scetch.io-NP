@@ -16,6 +16,7 @@ public class ChatMsg implements Serializable {
     public final static int MODE_TX_USER    =  0x99;
     public final static int MODE_TX_ORDER   =  0x100;
     public final static int MODE_TX_START   =  0x200;
+    public final static int MODE_TX_CORRECT	=  0x30;
 
     String userID;
     int mode;

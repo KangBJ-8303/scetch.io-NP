@@ -123,11 +123,9 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
     public void updateToolVisibility(){
         if(mainDisplay.getCurrentDrawer().equals(mainDisplay.getUid())){
             Order();
-            mainDisplay.printDisplay("true");
         }
         else {
             notOrder();
-            mainDisplay.printDisplay("false");
         }
 
     }

@@ -61,6 +61,7 @@ public class MainDisplay extends JFrame {
 
     private JPanel userInfoPanel; // 사용자 정보를 보여줄 패널
     private ArrayList<String> userList = new ArrayList<>();
+    private Map<String, Integer> userScores = new HashMap<>(); // 사용자 점수를 저장하는 맵
     private int orderIndex = 0;
 
     public MainDisplay(String serverAddress, int serverPort, String uid) {
@@ -107,7 +108,7 @@ public class MainDisplay extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
-                b_start.setEnabled(false);
+                b_start.setVisible(false);
             }
         });
         paintPanel.add(b_start, BorderLayout.SOUTH);
@@ -121,6 +122,8 @@ public class MainDisplay extends JFrame {
         add(mainPanel);
     }
 
+
+
     private JPanel createUserInfoPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -130,6 +133,9 @@ public class MainDisplay extends JFrame {
     public void startTimerFromServer() {
         if (timer != null) {
             timer.cancel();
+        }
+        if (uid.equals(currentDrawer)) {
+            t_input.setEnabled(false);
         }
         remainingSeconds = 10; // 남은 시간 초기화
         timer = new Timer();
@@ -174,7 +180,7 @@ public class MainDisplay extends JFrame {
                                 selectedWord = randomButton.getText();
                                 resetVocaPanelWithSelectedWord(selectedWord); // 선택된 단어로 vocaPanel 초기화
                                 paintPanel.setVisible(true);
-                                send(new ChatMsg(uid, ChatMsg.MODE_TX_START)); // 서버에 신호 보내기
+                                send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord)); // 서버에 신호 보내기
                             }
                         }
                         timer.cancel(); // 타이머 중지
@@ -208,7 +214,7 @@ public class MainDisplay extends JFrame {
                         resetVocaPanelWithSelectedWord(selectedWord); // 선택된 단어로 vocaPanel 초기화
                         timer.cancel(); // 타이머 중지
                         paintPanel.setVisible(true);
-                        send(new ChatMsg(uid, ChatMsg.MODE_TX_START)); // 서버에 신호 보내기
+                        send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord)); // 서버에 신호 보내기
                     }
                 });
                 vocaPanel.add(wordButton);
@@ -240,6 +246,10 @@ public class MainDisplay extends JFrame {
     }
 
     public void nextDrawer() {
+        if (uid.equals(currentDrawer)) {
+            t_input.setEnabled(true);
+        }
+
         orderIndex++;
         printDisplay("지금 순서: " + Integer.toString(orderIndex % userList.size()));
         send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
@@ -269,10 +279,15 @@ public class MainDisplay extends JFrame {
             colorIndex++;
         }
 
+        if (!userScores.containsKey(userName)) {
+            userScores.put(userName, 0); // 새로운 사용자 점수를 0으로 초기화 }
+        }
+
+
         int userColorIndex = userColorMap.get(userName) % USER_COLORS.length;
         Color userColor = USER_COLORS[userColorIndex];
         Color userTextColor = USER_TEXT_COLORS[userColorIndex];
-        RoundedLabel roundedLabel = new RoundedLabel(userName, userColor, userTextColor); // 사용자 정의 패널 생성
+        RoundedLabel roundedLabel = new RoundedLabel(userName, Integer.toString(userScores.get(userName)), userColor, userTextColor); // 사용자 정의 패널 생성
 
         userInfoPanel.add(roundedLabel); // 패널에 추가
         userInfoPanel.revalidate(); // 레이아웃 갱신
@@ -344,6 +359,19 @@ public class MainDisplay extends JFrame {
                             break;
                         case ChatMsg.MODE_TX_START:
                             startTimerFromServer();
+                            break;
+                        case ChatMsg.MODE_TX_CORRECT:
+                            if (uid.equals(inMsg.userID)) {
+                                printDisplay(uid + " 가 정답을 맞추었습니다.");
+                            }
+                            int newScore = userScores.get(inMsg.userID) + 1; // 현재 점수를 가져와서 +1 증가
+                            userScores.put(inMsg.userID, newScore); // 맵에 점수 업데이트
+                            newScore = userScores.get(currentDrawer) + 1;
+                            userScores.put(currentDrawer, newScore);
+                            remainingSeconds = 1;
+                            updateUserInfoPanel();
+                            break;
+
                     }
 
                 } catch (IOException e) {
@@ -369,6 +397,16 @@ public class MainDisplay extends JFrame {
         });
         receiveThread.start();
     }
+
+    private void updateUserInfoPanel() {
+        userInfoPanel.removeAll();
+        for (String user : userList) {
+            addUserInfo(user); // 점수를 포함한 userInfo를 추가
+        }
+        userInfoPanel.revalidate();
+        userInfoPanel.repaint();
+    }
+
 
     private JPanel createInputPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -462,12 +500,14 @@ public class MainDisplay extends JFrame {
     }
 
     public class RoundedLabel extends JPanel {
-        private String text;
+        private String userName;
+        private String score;
         private Color backgroundColor;
         private Color textColor;
 
-        public RoundedLabel(String text, Color backgroundColor, Color textColor) {
-            this.text = text;
+        public RoundedLabel(String userName, String score, Color backgroundColor, Color textColor) {
+            this.userName = userName;
+            this.score = score;
             this.backgroundColor = backgroundColor;
             this.textColor = textColor;
             setOpaque(false); // 배경 투명 설정
@@ -486,14 +526,21 @@ public class MainDisplay extends JFrame {
             g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20); // 둥근 테두리 그리기
 
             FontMetrics fm = g2.getFontMetrics();
-            int x = (getWidth() - fm.stringWidth(text)) / 2;
-            int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
-
             g2.setColor(textColor);
             g2.setFont(new Font("Serif", Font.BOLD, 20)); // 글자 크기 및 굵기 설정
-            g2.drawString(text, x - 10, y); // 텍스트 그리기
+
+            // userName 중앙 정렬
+            int xName = (getWidth() - fm.stringWidth(userName)) / 2;
+            int yName = (getHeight() / 2) - fm.getDescent();
+            g2.drawString(userName, xName - 10, yName - 10); // userName 그리기
+
+            // score 중앙 정렬
+            int xScore = (getWidth() - fm.stringWidth(score)) / 2;
+            int yScore = (getHeight() / 2) + fm.getAscent();
+            g2.drawString(score, xScore - 10, yScore + 10); // score 그리기
         }
     }
+
 
 
 }
