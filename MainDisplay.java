@@ -147,8 +147,8 @@ public class MainDisplay extends JFrame {
                         remainingSeconds--;
                         timerLabel.setText(String.valueOf(remainingSeconds)); // 타이머 라벨 업데이트
                     } else {
-                        canvas.setClean();
                         vocaPanel.setVisible(false);
+                        canvas.setClean();
                         nextDrawer(); // 60초 후 다음 사용자로 변경
                     }
                 });
@@ -370,6 +370,7 @@ public class MainDisplay extends JFrame {
                             newScore = userScores.get(currentDrawer) + 1;
                             userScores.put(currentDrawer, newScore);
                             remainingSeconds = 1;
+                            canvas.setClean();
                             updateUserInfoPanel();
                             break;
 

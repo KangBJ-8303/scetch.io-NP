@@ -196,7 +196,6 @@ public class WithChatServer extends JFrame{
                                 " stroke: " + Float.toString(msg.stroke) +  " shape: " + msg.shapeString);
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_USER) {
-
                         for(String user : userIDs){
                             printDisplay("userList : " + user);
                         }
