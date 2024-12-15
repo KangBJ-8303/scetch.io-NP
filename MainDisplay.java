@@ -43,6 +43,7 @@ public class MainDisplay extends JFrame {
 
     private JButton b_send = new JButton("보내기");
     private JButton b_start = new JButton("시작하기");
+    private JButton b_exit = new JButton("나가기");
 
     JPanel mainPanel = new JPanel(new BorderLayout());
     JPanel chatPanel = new JPanel(new BorderLayout());
@@ -64,11 +65,11 @@ public class MainDisplay extends JFrame {
     private int orderIndex = -1;
 
     public MainDisplay(String serverAddress, int serverPort, String uid) {
+        super(uid);
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.uid = uid;
         userList.add(uid);
-
 
         buildGUI();
 
@@ -94,6 +95,16 @@ public class MainDisplay extends JFrame {
         JPanel timerPanel = new JPanel();
         timerPanel.add(timerLabel);
         userPanel.add(timerPanel, BorderLayout.NORTH);
+        b_exit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                disconnect();
+                setVisible(false);
+                new StartDisplay(serverAddress, serverPort);
+                dispose();
+            }
+        });
+        userPanel.add(b_exit, BorderLayout.SOUTH);
 
         chatPanel.setPreferredSize(new Dimension(500, 600));
         chatPanel.add(createDisplayPanel(), BorderLayout.CENTER);
@@ -136,7 +147,7 @@ public class MainDisplay extends JFrame {
         if (uid.equals(currentDrawer)) {
             t_input.setEnabled(false);
         }
-        remainingSeconds = 10; // 남은 시간 초기화
+        remainingSeconds = 80; // 남은 시간 초기화
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -497,7 +508,6 @@ public class MainDisplay extends JFrame {
 
     private void disconnect() {
         send(new ChatMsg(uid, ChatMsg.MODE_LOGOUT));
-
         try {
             receiveThread = null;
             socket.close();

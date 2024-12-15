@@ -171,6 +171,10 @@ public class WithChatServer extends JFrame{
                         continue;
                     }
                     else if (msg.mode == ChatMsg.MODE_LOGOUT) {
+                        userScores.remove(uid);
+                        userIDs.remove(uid);
+                        users.removeElement(this);
+
                         ChatMsg logoutMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                         broadcasting(logoutMessage);
 
@@ -237,9 +241,7 @@ public class WithChatServer extends JFrame{
                     }
 
                 }
-                userIDs.remove(uid);
-                users.removeElement(this);
-                userScores.put(uid, 0);
+
                 printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
             }
             catch (IOException e) {
