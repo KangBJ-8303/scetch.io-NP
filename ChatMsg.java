@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 
@@ -17,6 +18,9 @@ public class ChatMsg implements Serializable {
     public final static int MODE_TX_ORDER   =  0x100;
     public final static int MODE_TX_START   =  0x200;
     public final static int MODE_TX_CORRECT	=  0x30;
+    public final static int MODE_TX_USERSCORE= 0x20;
+    public final static int MODE_TX_END		=  0x50;
+    public final static int MODE_TX_RESET	=  0x60;
 
     String userID;
     int mode;
@@ -31,6 +35,7 @@ public class ChatMsg implements Serializable {
     String shapeString;
     ArrayList<String> users;
     int order;
+    Map<String, Integer> userScores;
 
     public ChatMsg(String userID, int mode, String message, BufferedImage image, long size) {
         this.userID = userID;
@@ -65,7 +70,20 @@ public class ChatMsg implements Serializable {
     public ChatMsg(String userID, int code, int order){
         this.userID = userID;
         this.mode = code;
-        this.order =order;
+        this.order = order;
+    }
+
+    public ChatMsg(String userID, int code, Map<String, Integer> userScores){
+        this.userID = userID;
+        this.mode = code;
+        this.userScores = userScores;
+    }
+
+    public ChatMsg(String userID, int code, Map<String, Integer> userScores, int orderIndex){
+        this.userID = userID;
+        this.mode = code;
+        this.userScores = userScores;
+        this.order = orderIndex;
     }
 
     public ChatMsg(String userID, int code) {

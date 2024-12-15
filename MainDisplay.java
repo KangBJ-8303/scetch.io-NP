@@ -21,8 +21,7 @@ import java.util.Timer;
 
 public class MainDisplay extends JFrame {
 
-    private static final Color[] USER_COLORS = {Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE}; // 색상 배열
-    private static final Color[] USER_TEXT_COLORS = {Color.WHITE, Color.BLACK, Color.WHITE, Color.BLACK};
+    private static final Color[] USER_COLORS = {Color.WHITE, Color.CYAN}; // 색상 배열
     private Map<String, Integer> userColorMap = new HashMap<>(); // 사용자 ID와 색상 인덱스 매핑
     private int colorIndex = 0;
 
@@ -62,7 +61,7 @@ public class MainDisplay extends JFrame {
     private JPanel userInfoPanel; // 사용자 정보를 보여줄 패널
     private ArrayList<String> userList = new ArrayList<>();
     private Map<String, Integer> userScores = new HashMap<>(); // 사용자 점수를 저장하는 맵
-    private int orderIndex = 0;
+    private int orderIndex = -1;
 
     public MainDisplay(String serverAddress, int serverPort, String uid) {
         this.serverAddress = serverAddress;
@@ -107,7 +106,7 @@ public class MainDisplay extends JFrame {
         b_start.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, -1));
+                send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex));
                 b_start.setVisible(false);
             }
         });
@@ -246,6 +245,8 @@ public class MainDisplay extends JFrame {
     }
 
     public void nextDrawer() {
+        userColorMap.put(currentDrawer, 0);
+        updateUserInfoPanel();
         if (uid.equals(currentDrawer)) {
             t_input.setEnabled(true);
             send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
@@ -254,6 +255,8 @@ public class MainDisplay extends JFrame {
 
 
     public void setCurrentDrawer(String userName){
+        userColorMap.put(userName, 1);
+        updateUserInfoPanel();
         currentDrawer = userName;
         canvas.updateToolVisibility();
     }
@@ -267,13 +270,15 @@ public class MainDisplay extends JFrame {
     }
 
     public void addUserInfo(String userName) {
+        RoundedLabel roundedLabel;
         if(userList.size() < 2) {
             currentDrawer = null;
         }
+        canvas.setShapeString();
+        canvas.setClean();
 
         if (!userColorMap.containsKey(userName)) {
-            userColorMap.put(userName, colorIndex);
-            colorIndex++;
+            userColorMap.put(userName, 0);
         }
 
         if (!userScores.containsKey(userName)) {
@@ -283,9 +288,11 @@ public class MainDisplay extends JFrame {
 
         int userColorIndex = userColorMap.get(userName) % USER_COLORS.length;
         Color userColor = USER_COLORS[userColorIndex];
-        Color userTextColor = USER_TEXT_COLORS[userColorIndex];
-        RoundedLabel roundedLabel = new RoundedLabel(userName, Integer.toString(userScores.get(userName)), userColor, userTextColor); // 사용자 정의 패널 생성
-
+        if(uid.equals(userName)) {
+            roundedLabel = new RoundedLabel(userName +"(you)", Integer.toString(userScores.get(userName)), userColor, Color.BLACK); // 사용자 정의 패널 생성
+        }else {
+            roundedLabel = new RoundedLabel(userName, Integer.toString(userScores.get(userName)), userColor, Color.BLACK); // 사용자 정의 패널 생성
+        }
         userInfoPanel.add(roundedLabel); // 패널에 추가
         userInfoPanel.revalidate(); // 레이아웃 갱신
         userInfoPanel.repaint(); // 화면 갱신
@@ -320,7 +327,7 @@ public class MainDisplay extends JFrame {
         out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         receiveThread = new Thread(new Runnable() {
             private ObjectInputStream in;
-
+            private Map<String, Integer> receivedScores;
             private void receiveMessage() {
                 try {
                     ChatMsg inMsg = (ChatMsg)in.readObject();
@@ -351,6 +358,12 @@ public class MainDisplay extends JFrame {
                             userInfoPanel.revalidate();
                             userInfoPanel.repaint();
                             break;
+                        case ChatMsg.MODE_TX_USERSCORE:
+                            receivedScores = (Map<String, Integer>) inMsg.userScores;
+                            userScores.clear();
+                            userScores.putAll(receivedScores);
+                            updateUserInfoPanel();
+                            break;
                         case ChatMsg.MODE_TX_ORDER:
                             vocaPanel.setVisible(false);
                             orderIndex = inMsg.order % userList.size();
@@ -365,17 +378,37 @@ public class MainDisplay extends JFrame {
                             if (uid.equals(inMsg.userID)) {
                                 printDisplay(uid + " 가 정답을 맞추었습니다.");
                             }
-                            int newScore = userScores.get(inMsg.userID) + 1; // 현재 점수를 가져와서 +1 증가
-                            userScores.put(inMsg.userID, newScore); // 맵에 점수 업데이트
-                            newScore = userScores.get(currentDrawer) + 1;
-                            userScores.put(currentDrawer, newScore);
+                            receivedScores = (Map<String, Integer>) inMsg.userScores;
+                            userScores.clear();
+                            userScores.putAll(receivedScores);
+                            for(String user: userList) {
+                                if(userScores.get(user) == 4) {
+                                    printDisplay(user + "가 승리하였습니다.");
+                                    send(new ChatMsg(uid, ChatMsg.MODE_TX_RESET));
+                                    break;
+                                }
+                            }
                             remainingSeconds = 1;
                             canvas.setClean();
                             updateUserInfoPanel();
                             break;
-
+                        case ChatMsg.MODE_TX_END:
+                            vocaPanel.setVisible(false);
+                            orderIndex = -1;
+                            userScores.clear();
+                            userScores.putAll(inMsg.userScores);
+                            timer.cancel();
+                            timerLabel.setText("timer");
+                            for(String user : userList) {
+                                userColorMap.put(user, 0);
+                                updateUserInfoPanel();
+                            }
+                            if(uid.equals(userList.get(0))) {
+                                b_start.setVisible(true);
+                                b_start.setEnabled(true);
+                            }
+                            break;
                     }
-
                 } catch (IOException e) {
                     printDisplay("연결을 종료했습니다.");
                 } catch (ClassNotFoundException e) {

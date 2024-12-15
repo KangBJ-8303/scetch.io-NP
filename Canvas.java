@@ -130,6 +130,10 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
 
     }
 
+    public void setShapeString() {
+        shapeString = "";
+    }
+
     public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) {
 
         width = Math.abs(secondX - firstX);

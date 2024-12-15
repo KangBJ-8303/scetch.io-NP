@@ -11,6 +11,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -25,6 +27,7 @@ public class WithChatServer extends JFrame{
     private Thread acceptThread = null;
     private Vector<ClientHandler> users = new Vector<ClientHandler>();
     private ArrayList<String> userIDs = new ArrayList<>();
+    private Map<String, Integer> userScores = new HashMap<>();
 
     private JTextArea t_display;
     private JButton b_connect, b_disconnect, b_exit;
@@ -168,7 +171,6 @@ public class WithChatServer extends JFrame{
                         continue;
                     }
                     else if (msg.mode == ChatMsg.MODE_LOGOUT) {
-                        userIDs.remove(uid);
                         ChatMsg logoutMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                         broadcasting(logoutMessage);
 
@@ -181,7 +183,18 @@ public class WithChatServer extends JFrame{
                         printDisplay(message);
                         broadcasting(msg);
                         if(correctAnswer(msg.message)) {
-                            ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT);
+                            int uidScore = userScores.get(uid) + 1;
+                            userScores.put(uid, uidScore);
+
+                            String currentDrawerUid = userIDs.get(orderIndex % users.size());
+                            int drawerScore = userScores.get(currentDrawerUid) + 1;
+                            userScores.put(currentDrawerUid, drawerScore);
+
+                            for(String user: userIDs) {
+                                printDisplay(user +": "+ Integer.toString(userScores.get(user)));
+                            }
+
+                            ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT, new HashMap<String, Integer>(userScores));
                             printDisplay(uid + "에게 점수 1점");
                             printDisplay(userIDs.get(orderIndex % users.size()) +"에게 점수 1점");
                             broadcasting(addScore);
@@ -196,9 +209,13 @@ public class WithChatServer extends JFrame{
                                 " stroke: " + Float.toString(msg.stroke) +  " shape: " + msg.shapeString);
                     }
                     else if(msg.mode == ChatMsg.MODE_TX_USER) {
+                        userScores.put(msg.userID, 0);
                         for(String user : userIDs){
                             printDisplay("userList : " + user);
                         }
+                        ChatMsg userScore = new ChatMsg("", ChatMsg.MODE_TX_USERSCORE, new HashMap<String, Integer>(userScores));
+                        broadcasting(userScore);
+
                         ChatMsg userID = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
                         broadcasting(userID);
                     }
@@ -211,14 +228,24 @@ public class WithChatServer extends JFrame{
                         selectedWord = msg.message;
                         broadcasting(msg);
                     }
+                    else if(msg.mode == ChatMsg.MODE_TX_RESET) {
+                        for(String user : userIDs) {
+                            userScores.put(user, 0);
+                        }
+                        ChatMsg reset = new ChatMsg(uid, ChatMsg.MODE_TX_END, new HashMap<String, Integer>(userScores));
+                        broadcasting(reset);
+                    }
+
                 }
                 userIDs.remove(uid);
                 users.removeElement(this);
+                userScores.put(uid, 0);
                 printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
             }
             catch (IOException e) {
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                 broadcasting(logoutMessage);
+                userScores.put(uid, 0);
                 userIDs.remove(uid);
                 users.removeElement(this);
                 ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
