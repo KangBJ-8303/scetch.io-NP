@@ -186,7 +186,7 @@ public class WithChatServer extends JFrame{
                         message = uid + ": " + msg.message;
                         printDisplay(message);
                         broadcasting(msg);
-                        if(correctAnswer(msg.message)) {
+                        if(selectedWord != null && correctAnswer(msg.message)) {
                             int uidScore = userScores.get(uid) + 1;
                             userScores.put(uid, uidScore);
 
@@ -247,9 +247,16 @@ public class WithChatServer extends JFrame{
             catch (IOException e) {
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                 broadcasting(logoutMessage);
-                userScores.put(uid, 0);
+                userScores.remove(uid);
                 userIDs.remove(uid);
                 users.removeElement(this);
+                if(userIDs.size() < 2) {
+                    for(String user : userIDs) {
+                        userScores.put(user, 0);
+                    }
+                    ChatMsg reset = new ChatMsg(uid, ChatMsg.MODE_TX_END, new HashMap<String, Integer>(userScores));
+                    broadcasting(reset);
+                }
                 ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList<>(userIDs));
                 broadcasting(userUpdateMessage);
                 printDisplay(uid + " 연결 끊김. 현재 참가자 수: " + users.size());

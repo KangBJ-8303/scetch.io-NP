@@ -98,6 +98,9 @@ public class MainDisplay extends JFrame {
         b_exit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if(userList.size() == 2) {
+                    send(new ChatMsg(uid, ChatMsg.MODE_TX_RESET));
+                }
                 disconnect();
                 setVisible(false);
                 new StartDisplay(serverAddress, serverPort);
@@ -173,6 +176,7 @@ public class MainDisplay extends JFrame {
         remainingSeconds = 15; // 남은 시간 초기화
         timer = new Timer();
         if (uid.equals(currentDrawer)) {
+            t_input.setEnabled(false);
             loadRandomWords();
         }
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -283,6 +287,9 @@ public class MainDisplay extends JFrame {
     public void addUserInfo(String userName) {
         RoundedLabel roundedLabel;
         if(userList.size() < 2) {
+            canvas.setClean();
+            b_start.setVisible(true);
+            b_start.setEnabled(true);
             currentDrawer = null;
         }
         canvas.setShapeString();
@@ -310,6 +317,7 @@ public class MainDisplay extends JFrame {
 
         if(userList.size() >= 2) {
             if(uid.equals(userList.get(0))) {
+                printDisplay(userList.get(0));
                 b_start.setEnabled(true);
             }
             else {
@@ -404,10 +412,13 @@ public class MainDisplay extends JFrame {
                             updateUserInfoPanel();
                             break;
                         case ChatMsg.MODE_TX_END:
+                            paintPanel.setVisible(true);
                             vocaPanel.setVisible(false);
+                            b_start.setVisible(true);
                             orderIndex = -1;
                             userScores.clear();
                             userScores.putAll(inMsg.userScores);
+                            canvas.setClean();
                             timer.cancel();
                             timerLabel.setText("timer");
                             for(String user : userList) {
