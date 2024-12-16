@@ -327,7 +327,6 @@ public class MainDisplay extends JFrame {
 
         if(userList.size() >= 2) {
             if(uid.equals(userList.get(0))) {
-                printDisplay(userList.get(0));
                 b_start.setEnabled(true);
             }
             else {
