@@ -182,11 +182,12 @@ public class WithChatServer extends JFrame{
                         broadcasting(userUpdateMessage);
                         break;
                     }
-                    else if(msg.mode == ChatMsg.MODE_TX_STRING) {
+                    else if (msg.mode == ChatMsg.MODE_TX_STRING) {
                         message = uid + ": " + msg.message;
                         printDisplay(message);
                         broadcasting(msg);
-                        if(selectedWord != null && correctAnswer(msg.message)) {
+
+                        if (selectedWord != null && correctAnswer(msg.message)) {
                             int uidScore = userScores.get(uid) + 1;
                             userScores.put(uid, uidScore);
 
@@ -194,16 +195,23 @@ public class WithChatServer extends JFrame{
                             int drawerScore = userScores.get(currentDrawerUid) + 1;
                             userScores.put(currentDrawerUid, drawerScore);
 
-                            for(String user: userIDs) {
-                                printDisplay(user +": "+ Integer.toString(userScores.get(user)));
+                            for (String user : userIDs) {
+                                printDisplay(user + ": " + userScores.get(user));
                             }
 
-                            ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT, new HashMap<String, Integer>(userScores));
+                            ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT, new HashMap<>(userScores));
                             printDisplay(uid + "에게 점수 1점");
-                            printDisplay(userIDs.get(orderIndex % users.size()) +"에게 점수 1점");
+                            printDisplay(currentDrawerUid + "에게 점수 1점");
+
                             broadcasting(addScore);
+
+                            // 다음 출제자 설정
+                            orderIndex++;
+                            ChatMsg newOrderMsg = new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex);
+                            broadcasting(newOrderMsg);
                         }
                     }
+
                     else if(msg.mode == ChatMsg.MODE_TX_IMAGE) {
                         broadcasting(msg);
                     }
@@ -228,10 +236,30 @@ public class WithChatServer extends JFrame{
                         ChatMsg newMsg = new ChatMsg(uid , ChatMsg.MODE_TX_ORDER, orderIndex);
                         broadcasting(newMsg);
                     }
-                    else if(msg.mode == ChatMsg.MODE_TX_START) {
+                    else if (msg.mode == ChatMsg.MODE_TX_START) {
                         selectedWord = msg.message;
-                        broadcasting(msg);
+
+                        for (ClientHandler client : users) {
+                            ChatMsg startMsg;
+                            if (client.uid.equals(userIDs.get(orderIndex % users.size()))) {
+                                // 출제자에게 단어를 그대로 전송
+                                startMsg = new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord);
+                                System.out.println("Sending to drawer: " + selectedWord);
+                            } else {
+                                // 다른 클라이언트에게 숨겨진 단어 전송
+                                StringBuilder hiddenWord = new StringBuilder();
+                                for (int i = 0; i < selectedWord.length(); i++) {
+                                    hiddenWord.append("_ ");
+                                }
+                                startMsg = new ChatMsg(uid, ChatMsg.MODE_TX_START, hiddenWord.toString().trim());
+                                System.out.println("Sending to others: " + hiddenWord.toString().trim());
+                            }
+                            client.send(startMsg); // 메시지 전송
+                        }
                     }
+
+
+
                     else if(msg.mode == ChatMsg.MODE_TX_RESET) {
                         for(String user : userIDs) {
                             userScores.put(user, 0);
