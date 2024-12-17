@@ -1,333 +1,383 @@
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.Point;
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-
+import java.awt.image.ImageObserver;
+import javax.swing.*;
 
 public class Canvas extends JPanel implements ActionListener, MouseListener, MouseMotionListener {
-
-    String shapeString = ""; // 도형의 형태를 담는 변수
+    String shapeString = "";
     Point firstPointer = new Point(0, 0);
     Point secondPointer = new Point(0, 0);
     BufferedImage bufferedImage;
-    Color colors = Color.black;
-    Float stroke = (float) 5;
+    Color colors;
+    Float stroke;
     JComboBox<String> colorComboBox;
-    JComboBox<Float> strokeComboBox; // float로 설정해주는 이유는 setStroke에서 받는 인자 자료형이 float
-
-    String[] colorNames = {"검정", "빨강", "파랑", "초록", "노랑", "핑크", "마젠타"};
-    Color[] colorsArray = {Color.black, Color.red, Color.blue, Color.green, Color.yellow, Color.pink, Color.magenta};
-
+    JComboBox<Float> strokeComboBox;
+    String[] colorNames;
+    Color[] colorsArray;
     String uid;
     MainDisplay mainDisplay;
-
     int width;
     int height;
     int minPointx;
     int minPointy;
-
     private JPanel toolPanel;
-
-    JButton eraseAllButton = new JButton("전체지우기");
-    JButton rectButton = new JButton("네모");
-    JButton lineButton = new JButton("선");
-    JButton circleButton = new JButton("원");
-    JButton penButton = new JButton("펜");
-    JButton eraseButton = new JButton("지우개");
+    JButton eraseAllButton;
+    JButton rectButton;
+    JButton lineButton;
+    JButton circleButton;
+    JButton penButton;
+    JButton eraseButton;
 
     public Canvas(String uid, MainDisplay mainDisplay) {
+        this.colors = Color.black;
+        this.stroke = 5.0F;
+        this.colorNames = new String[]{"검정", "빨강", "파랑", "초록", "노랑", "핑크", "마젠타"};
+        this.colorsArray = new Color[]{Color.black, Color.red, Color.blue, Color.green, Color.yellow, Color.pink, Color.magenta};
+        this.eraseAllButton = new JButton("전체지우기");
+        this.rectButton = new JButton("네모");
+        this.lineButton = new JButton("선");
+        this.circleButton = new JButton("원");
+        this.penButton = new JButton("펜");
+        this.eraseButton = new JButton("지우개");
         this.uid = uid;
         this.mainDisplay = mainDisplay;
-        colorComboBox = new JComboBox<>(colorNames);
-        strokeComboBox = new JComboBox<Float>();
-        toolPanel = createToolPanel();
-        notOrder();
+        this.colorComboBox = new JComboBox(this.colorNames);
+        this.strokeComboBox = new JComboBox();
+        this.toolPanel = this.createToolPanel();
+        this.notOrder();
+        this.setBorder(BorderFactory.createLineBorder(Color.GRAY, 2));
     }
 
-    private void Order(){
-        eraseAllButton.setEnabled(true);
-        rectButton.setEnabled(true);
-        lineButton.setEnabled(true);
-        circleButton.setEnabled(true);
-        penButton.setEnabled(true);
-        eraseButton.setEnabled(true);
+    private void Order() {
+        this.eraseAllButton.setEnabled(true);
+        this.rectButton.setEnabled(true);
+        this.lineButton.setEnabled(true);
+        this.circleButton.setEnabled(true);
+        this.penButton.setEnabled(true);
+        this.eraseButton.setEnabled(true);
     }
 
-    private void notOrder(){
-        eraseAllButton.setEnabled(false);
-        rectButton.setEnabled(false);
-        lineButton.setEnabled(false);
-        circleButton.setEnabled(false);
-        penButton.setEnabled(false);
-        eraseButton.setEnabled(false);
+    private void notOrder() {
+        this.eraseAllButton.setEnabled(false);
+        this.rectButton.setEnabled(false);
+        this.lineButton.setEnabled(false);
+        this.circleButton.setEnabled(false);
+        this.penButton.setEnabled(false);
+        this.eraseButton.setEnabled(false);
     }
 
     private JPanel createToolPanel() {
-        JPanel panel = new JPanel(new GridLayout(2,6));
+        JPanel panel = new JPanel(new GridLayout(2, 6, 5, 5));
+        Color backgroundColor = new Color(240, 248, 255);
 
-        strokeComboBox.setModel(new DefaultComboBoxModel<Float>(
-                new Float[] { (float) 5, (float) 10, (float) 15, (float) 20, (float) 25 }));
+        panel.setBackground(backgroundColor);
 
-        add(eraseAllButton);
-        add(penButton);
-        add(lineButton);
-        add(rectButton);
-        add(circleButton);
-        add(colorComboBox);
-        add(strokeComboBox);
-        add(eraseButton);
+        int imageSize = 45;
 
-        panel.add(eraseButton);
-        panel.add(eraseAllButton);
-        panel.add(rectButton);
-        panel.add(lineButton);
-        panel.add(circleButton);
-        panel.add(penButton);
-        panel.add(colorComboBox);
-        panel.add(strokeComboBox);
+        this.eraseAllButton = createImageButton("resources/icons/eraseall.png", imageSize, backgroundColor, "전체지우기");
+        this.rectButton = createImageButton("resources/icons/rect.png", imageSize, backgroundColor, "네모");
+        this.lineButton = createImageButton("resources/icons/line.png", imageSize, backgroundColor, "선");
+        this.circleButton = createImageButton("resources/icons/circle.png", imageSize, backgroundColor, "원");
+        this.penButton = createImageButton("resources/icons/pen.png", imageSize, backgroundColor, "펜");
+        this.eraseButton = createImageButton("resources/icons/erase.png", imageSize, backgroundColor, "지우개");
 
-        eraseAllButton.addActionListener(this);
-        rectButton.addActionListener(this);
-        lineButton.addActionListener(this);
-        circleButton.addActionListener(this);
-        penButton.addActionListener(this);
-        eraseButton.addActionListener(this);
-        colorComboBox.addActionListener(this);
-        strokeComboBox.addActionListener(this);
+        JButton[] buttons = {eraseAllButton, rectButton, lineButton, circleButton, penButton, eraseButton};
+        for (JButton button : buttons) {
+            button.addActionListener(this);
+            panel.add(button);
+        }
 
-        setLayout(new BorderLayout());
-        bufferedImage = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB);
-        setImageBackground(bufferedImage); // save 할 때 배경이 default로 black이여서 흰색으로
-        add(panel, BorderLayout.SOUTH);
+        Float[] strokeOptions = {1.0f, 3.0f, 5.0f, 7.0f, 10.0f};
+        for (Float strokeValue : strokeOptions) {
+            this.strokeComboBox.addItem(strokeValue);
+        }
 
-        addMouseListener(this);
-        addMouseMotionListener(this);
-
+        this.eraseAllButton.addActionListener(this);
+        this.rectButton.addActionListener(this);
+        this.lineButton.addActionListener(this);
+        this.circleButton.addActionListener(this);
+        this.penButton.addActionListener(this);
+        this.eraseButton.addActionListener(this);
+        this.strokeComboBox.addActionListener(this);
+        this.colorComboBox.addActionListener(this);
+        this.add(this.colorComboBox);
+        this.add(this.strokeComboBox);
+        panel.add(this.eraseButton);
+        panel.add(this.eraseAllButton);
+        panel.add(this.rectButton);
+        panel.add(this.lineButton);
+        panel.add(this.circleButton);
+        panel.add(this.penButton);
+        panel.add(this.colorComboBox);
+        panel.add(this.strokeComboBox);
+        this.eraseAllButton.addActionListener(this);
+        this.rectButton.addActionListener(this);
+        this.lineButton.addActionListener(this);
+        this.circleButton.addActionListener(this);
+        this.penButton.addActionListener(this);
+        this.eraseButton.addActionListener(this);
+        this.colorComboBox.addActionListener(this);
+        this.strokeComboBox.addActionListener(this);
+        this.setLayout(new BorderLayout());
+        this.bufferedImage = new BufferedImage(500, 500, 2);
+        this.setImageBackground(this.bufferedImage);
+        this.add(panel, "South");
+        this.addMouseListener(this);
+        this.addMouseMotionListener(this);
         return panel;
     }
 
-    public void updateToolVisibility(){
-        if(mainDisplay.getCurrentDrawer().equals(mainDisplay.getUid())){
-            Order();
-        }
-        else {
-            notOrder();
+    private JButton createImageButton(String imagePath, int imageSize, Color buttonBackgroundColor, String command) {
+        ImageIcon icon = new ImageIcon(imagePath);
+        Image scaledImage = icon.getImage().getScaledInstance(imageSize, imageSize, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+
+        JButton button = new JButton(scaledIcon);
+        button.setPreferredSize(new Dimension(50, 50));
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(true);
+        button.setBackground(buttonBackgroundColor);
+        button.setOpaque(true);
+        button.setActionCommand(command);
+        return button;
+    }
+
+
+
+    public void updateToolVisibility() {
+        if (this.mainDisplay.getCurrentDrawer().equals(this.mainDisplay.getUid())) {
+            this.Order();
+        } else {
+            this.notOrder();
         }
 
     }
 
     public void setShapeString() {
-        shapeString = "";
+        this.shapeString = "";
     }
 
     public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) {
-
-        width = Math.abs(secondX - firstX);
-        height = Math.abs(secondY - firstY);
-
-        minPointx = Math.min(firstX, secondX);
-        minPointy = Math.min(firstY, secondY);
-
-        Graphics2D g = bufferedImage.createGraphics();
-
+        this.width = Math.abs(secondX - firstX);
+        this.height = Math.abs(secondY - firstY);
+        this.minPointx = Math.min(firstX, secondX);
+        this.minPointy = Math.min(firstY, secondY);
+        Graphics2D g = this.bufferedImage.createGraphics();
         switch (shapeString) {
-            case ("선"):
+            case "선":
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawLine(firstX, firstY, secondX, secondY);
                 break;
-            case ("네모"):
+            case "네모":
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
-                g.drawRect(minPointx, minPointy, width, height);
+                g.drawRect(this.minPointx, this.minPointy, this.width, this.height);
                 break;
-            case ("원"):
+            case "원":
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
-                g.drawOval(minPointx, minPointy, width, height);
+                g.drawOval(this.minPointx, this.minPointy, this.width, this.height);
                 break;
-            case ("펜"):
+            case "펜":
                 g.setColor(colors);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawLine(firstX, firstY, secondX, secondY);
                 break;
-            case ("지우개"):
+            case "지우개":
                 g.setColor(Color.white);
                 g.setStroke(new BasicStroke(stroke));
                 g.drawLine(firstX, firstY, secondX, secondY);
                 break;
-            case ("전체지우기"):
-                setImageBackground(bufferedImage);
-                break;
-            default:
-                break;
+            case "전체지우기":
+                this.setImageBackground(this.bufferedImage);
         }
+
         g.dispose();
-        repaint();
+        this.repaint();
     }
 
     public void setClean() {
-        setImageBackground(bufferedImage);
+        this.setImageBackground(this.bufferedImage);
     }
 
     public void mousePressed(MouseEvent e) {
-        // 다시 클릭됐을경우 좌표 초기화
-        firstPointer.setLocation(0, 0);
-        secondPointer.setLocation(0, 0);
-
-        firstPointer.setLocation(e.getX(), e.getY());
+        this.firstPointer.setLocation(0, 0);
+        this.secondPointer.setLocation(0, 0);
+        this.firstPointer.setLocation(e.getX(), e.getY());
     }
 
     public void mouseReleased(MouseEvent e) {
-
-        if (shapeString != "펜") {
-            secondPointer.setLocation(e.getX(), e.getY());
-            updatePaint();
-            firstPointer.setLocation(0, 0);
-            secondPointer.setLocation(0, 0);
+        if (this.shapeString != "펜") {
+            this.secondPointer.setLocation(e.getX(), e.getY());
+            this.updatePaint();
+            this.firstPointer.setLocation(0, 0);
+            this.secondPointer.setLocation(0, 0);
         }
+
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().getClass().toString().contains("JButton")) {
-            shapeString = e.getActionCommand();
+        String command = e.getActionCommand();
+
+        if (e.getSource() == this.colorComboBox) {
+            int selectedIndex = this.colorComboBox.getSelectedIndex();
+            this.colors = this.colorsArray[selectedIndex];
+            System.out.println("선택된 색상: " + this.colors);
+            return;
         }
-        else if (e.getSource().equals(colorComboBox)) {
-            int selectedIndex = colorComboBox.getSelectedIndex();
-            colors = colorsArray[selectedIndex]; // 선택된 색상 인덱스에 따라 색상 설정
+
+        if (e.getSource() == this.strokeComboBox) {
+            this.stroke = (Float) this.strokeComboBox.getSelectedItem();
+            System.out.println("펜 굵기: " + this.stroke);
+            return;
         }
-        else if (e.getSource().equals(strokeComboBox)) {
-            stroke = (float) strokeComboBox.getSelectedItem();
+
+        switch (command) {
+            case "전체지우기":
+                this.shapeString = "전체지우기";
+                this.setClean();
+                break;
+            case "네모":
+                this.shapeString = "네모";
+                break;
+            case "선":
+                this.shapeString = "선";
+                break;
+            case "원":
+                this.shapeString = "원";
+                break;
+            case "펜":
+                this.shapeString = "펜";
+                break;
+            case "지우개":
+                this.shapeString = "지우개";
+                break;
+            default:
+                System.out.println("알 수 없는 명령: " + command);
         }
     }
+
 
     public Dimension getPreferredSize() {
         return new Dimension(500, 500);
     }
 
     public void updatePaint() {
-        width = Math.abs(secondPointer.x - firstPointer.x);
-        height = Math.abs(secondPointer.y - firstPointer.y);
-
-        minPointx = Math.min(firstPointer.x, secondPointer.x);
-        minPointy = Math.min(firstPointer.y, secondPointer.y);
-
-        Graphics2D g = bufferedImage.createGraphics();
-        // draw on paintImage using Graphics
-        mainDisplay.sendDrawing(uid, firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y, colors, stroke, shapeString);
-        switch (shapeString) {
-            case ("선"):
-                g.setColor(colors);
-                g.setStroke(new BasicStroke(stroke));
-                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+        this.width = Math.abs(this.secondPointer.x - this.firstPointer.x);
+        this.height = Math.abs(this.secondPointer.y - this.firstPointer.y);
+        this.minPointx = Math.min(this.firstPointer.x, this.secondPointer.x);
+        this.minPointy = Math.min(this.firstPointer.y, this.secondPointer.y);
+        Graphics2D g = this.bufferedImage.createGraphics();
+        this.mainDisplay.sendDrawing(this.uid, this.firstPointer.x, this.firstPointer.y, this.secondPointer.x, this.secondPointer.y, this.colors, this.stroke, this.shapeString);
+        switch (this.shapeString) {
+            case "선":
+                g.setColor(this.colors);
+                g.setStroke(new BasicStroke(this.stroke));
+                g.drawLine(this.firstPointer.x, this.firstPointer.y, this.secondPointer.x, this.secondPointer.y);
                 break;
-            case ("네모"):
-                g.setColor(colors);
-                g.setStroke(new BasicStroke(stroke));
-                g.drawRect(minPointx, minPointy, width, height);
+            case "네모":
+                g.setColor(this.colors);
+                g.setStroke(new BasicStroke(this.stroke));
+                g.drawRect(this.minPointx, this.minPointy, this.width, this.height);
                 break;
-            case ("원"):
-                g.setColor(colors);
-                g.setStroke(new BasicStroke(stroke));
-                g.drawOval(minPointx, minPointy, width, height);
+            case "원":
+                g.setColor(this.colors);
+                g.setStroke(new BasicStroke(this.stroke));
+                g.drawOval(this.minPointx, this.minPointy, this.width, this.height);
                 break;
-            case ("펜"):
-                g.setColor(colors);
-                g.setStroke(new BasicStroke(stroke));
-                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+            case "펜":
+                g.setColor(this.colors);
+                g.setStroke(new BasicStroke(this.stroke));
+                g.drawLine(this.firstPointer.x, this.firstPointer.y, this.secondPointer.x, this.secondPointer.y);
                 break;
-            case ("지우개"):
+            case "지우개":
                 g.setColor(Color.white);
-                g.setStroke(new BasicStroke(stroke));
-                g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
+                g.setStroke(new BasicStroke(this.stroke));
+                g.drawLine(this.firstPointer.x, this.firstPointer.y, this.secondPointer.x, this.secondPointer.y);
                 break;
-            case ("전체지우기"):
-                setImageBackground(bufferedImage);
-                shapeString ="";
-                break;
-            default:
-                break;
+            case "전체지우기":
+                this.setImageBackground(this.bufferedImage);
+                this.shapeString = "";
         }
-        g.dispose();
-        repaint();
 
+        g.dispose();
+        this.repaint();
     }
 
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawImage(bufferedImage, 0, 0, null);
-
+        g.drawImage(this.bufferedImage, 0, 0, (ImageObserver)null);
     }
 
     public void setImageBackground(BufferedImage bi) {
         this.bufferedImage = bi;
-        Graphics2D g = bufferedImage.createGraphics();
+        Graphics2D g = this.bufferedImage.createGraphics();
         g.setColor(Color.white);
         g.fillRect(0, 0, 500, 500);
         g.dispose();
     }
 
-    @Override
     public void mouseDragged(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-        width = Math.abs(secondPointer.x - firstPointer.x);
-        height = Math.abs(secondPointer.y - firstPointer.y);
-
-        minPointx = Math.min(firstPointer.x, secondPointer.x);
-        minPointy = Math.min(firstPointer.y, secondPointer.y);
-
-        if (shapeString == "펜" | shapeString == "지우개") {
-            if (secondPointer.x != 0 && secondPointer.y != 0) {
-                firstPointer.x = secondPointer.x;
-                firstPointer.y = secondPointer.y;
+        this.width = Math.abs(this.secondPointer.x - this.firstPointer.x);
+        this.height = Math.abs(this.secondPointer.y - this.firstPointer.y);
+        this.minPointx = Math.min(this.firstPointer.x, this.secondPointer.x);
+        this.minPointy = Math.min(this.firstPointer.y, this.secondPointer.y);
+        if (this.shapeString == "펜" | this.shapeString == "지우개") {
+            if (this.secondPointer.x != 0 && this.secondPointer.y != 0) {
+                this.firstPointer.x = this.secondPointer.x;
+                this.firstPointer.y = this.secondPointer.y;
             }
-            secondPointer.setLocation(e.getX(), e.getY());
-            updatePaint();
-        } else if (shapeString == "선") {
-            Graphics g = getGraphics();
-            g.drawLine(firstPointer.x, firstPointer.y, secondPointer.x, secondPointer.y);
-            secondPointer.setLocation(e.getX(), e.getY());
-            repaint();
+
+            this.secondPointer.setLocation(e.getX(), e.getY());
+            this.updatePaint();
+        } else if (this.shapeString == "선") {
+            Graphics g = this.getGraphics();
+            g.drawLine(this.firstPointer.x, this.firstPointer.y, this.secondPointer.x, this.secondPointer.y);
+            this.secondPointer.setLocation(e.getX(), e.getY());
+            this.repaint();
             g.dispose();
-        } else if (shapeString == "네모") {
-            Graphics g = getGraphics();
+        } else if (this.shapeString == "네모") {
+            Graphics g = this.getGraphics();
             g.setColor(Color.BLACK);
-            g.setXORMode(getBackground());
-            g.drawRect(minPointx, minPointy, width, height);
-            secondPointer.setLocation(e.getX(), e.getY());
-            repaint();
+            g.setXORMode(this.getBackground());
+            g.drawRect(this.minPointx, this.minPointy, this.width, this.height);
+            this.secondPointer.setLocation(e.getX(), e.getY());
+            this.repaint();
             g.dispose();
-        } else if (shapeString == "원") {
-            Graphics g = getGraphics();
+        } else if (this.shapeString == "원") {
+            Graphics g = this.getGraphics();
             g.setColor(Color.BLACK);
-            g.setXORMode(getBackground());
-            g.drawOval(minPointx, minPointy, width, height);
-            secondPointer.setLocation(e.getX(), e.getY());
+            g.setXORMode(this.getBackground());
+            g.drawOval(this.minPointx, this.minPointy, this.width, this.height);
+            this.secondPointer.setLocation(e.getX(), e.getY());
             g.dispose();
-            repaint();
+            this.repaint();
         }
+
     }
-    @Override
-    public void mouseMoved(MouseEvent e) {}
-    @Override
-    public void mouseClicked(MouseEvent e) {}
-    @Override
-    public void mouseEntered(MouseEvent e) {}
-    @Override
-    public void mouseExited(MouseEvent e) {}
-}// Class dotButton
+
+    public void mouseMoved(MouseEvent e) {
+    }
+
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    public void mouseExited(MouseEvent e) {
+    }
+}
