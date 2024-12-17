@@ -174,7 +174,7 @@ public class MainDisplay extends JFrame {
             public void run() {
                 SwingUtilities.invokeLater(() -> { // 쓰레드 겹침 방지
                     if (remainingSeconds > 0) {
-                        --remainingSeconds;
+                        remainingSeconds--;
                         timerLabel.setText(String.valueOf(remainingSeconds));
                     } else {
                         vocaPanel.setVisible(false);
@@ -184,7 +184,7 @@ public class MainDisplay extends JFrame {
 
                 });
             }
-        }, 1000L, 1000L);
+        }, 1000, 1000);
     }
 
     public void selectVoca() { // 단어 선택 시간, 화면
@@ -199,7 +199,7 @@ public class MainDisplay extends JFrame {
             loadRandomWords(); // 랜덤 단어 가져오기
         }
 
-        this.timer.scheduleAtFixedRate(new TimerTask() {
+        timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 SwingUtilities.invokeLater(() -> {
                     if (remainingSeconds > 0) {
@@ -221,7 +221,7 @@ public class MainDisplay extends JFrame {
 
                 });
             }
-        }, 1000L, 1000L);// 1초 마다 반복
+        }, 1000, 1000);// 1초 마다 반복
     }
 
     private void loadRandomWords() {
@@ -449,18 +449,19 @@ public class MainDisplay extends JFrame {
                             orderIndex = inMsg.order % userList.size();
                             setCurrentDrawer(userList.get(orderIndex));
                             printDisplay("지금 턴 : " + currentDrawer);
-                            if (uid.equals(userList.get(orderIndex))) {
-                                selectVoca();
-                            }
+
+                            selectVoca();
+
                             break;
                         case ChatMsg.MODE_TX_START: // 게임 시작
                             String displayWord = inMsg.message;
                             System.out.println("Received word: " + displayWord);
+                            startTimerFromServer();
                             resetVocaPanelWithSelectedWord(displayWord);
                     }
-                } catch (IOException var5) {
+                } catch (IOException e) {
                     printDisplay("연결을 종료했습니다.");
-                } catch (ClassNotFoundException var6) {
+                } catch (ClassNotFoundException e) {
                     printDisplay("잘못된 객체가 전달되었습니다.");
                 }
 
