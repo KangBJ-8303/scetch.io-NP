@@ -88,67 +88,69 @@ public class MainDisplay extends JFrame {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.uid = uid;
-        this.userList.add(uid);
-        this.buildGUI();
-        this.setBounds(200, 80, 1200, 600);
-        this.setDefaultCloseOperation(3);
-        this.setResizable(false);
-        this.setVisible(true);
+        userList.add(uid);
+        buildGUI();
+        setBounds(200, 80, 1200, 600);
+        setDefaultCloseOperation(3);
+        setResizable(false);
+        setVisible(true);
 
         try {
-            this.connectToServer();
-            this.sendUserID();
+            connectToServer();
+            sendUserID();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     private void buildGUI() {
-        this.userPanel.setPreferredSize(new Dimension(200, 600));
-        this.userPanel.setBackground(new Color(240, 248, 255));
-        this.userPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
-        this.chatPanel.setBackground(new Color(255, 250, 240));
-        this.chatPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
-        this.timerLabel.setFont(new Font("맑은 고딕", 1, 18));
-        this.timerLabel.setHorizontalAlignment(0);
-        this.timerLabel.setForeground(Color.DARK_GRAY);
-        this.userInfoPanel = this.createUserInfoPanel();
-        this.userPanel.add(this.userInfoPanel, "Center");
+        userPanel.setPreferredSize(new Dimension(200, 600));
+        userPanel.setBackground(new Color(240, 248, 255));
+        userPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
+        chatPanel.setBackground(new Color(255, 250, 240));
+        chatPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
+        timerLabel.setFont(new Font("맑은 고딕", 1, 18));
+        timerLabel.setHorizontalAlignment(0);
+        timerLabel.setForeground(Color.DARK_GRAY);
+        userInfoPanel = createUserInfoPanel();
+        userPanel.add(userInfoPanel, BorderLayout.CENTER);
         JPanel timerPanel = new JPanel();
-        timerPanel.add(this.timerLabel);
-        this.userPanel.add(timerPanel, "North");
-        this.b_exit.addActionListener(new ActionListener() {
+        timerPanel.add(timerLabel);
+        userPanel.add(timerPanel, BorderLayout.NORTH);
+        b_exit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (MainDisplay.this.userList.size() == 2) {
-                    MainDisplay.this.send(new ChatMsg(MainDisplay.this.uid, 96));
+                if (userList.size() == 2) {
+                    send(new ChatMsg(uid, ChatMsg.MODE_TX_RESET));
                 }
 
-                MainDisplay.this.disconnect();
-                MainDisplay.this.setVisible(false);
-                new StartDisplay(MainDisplay.this.serverAddress, MainDisplay.this.serverPort);
-                MainDisplay.this.dispose();
+                disconnect();
+                setVisible(false);
+                new StartDisplay(serverAddress, serverPort);
+                dispose();
             }
         });
-        this.userPanel.add(this.b_exit, "South");
-        this.chatPanel.setPreferredSize(new Dimension(500, 600));
-        this.chatPanel.add(this.createDisplayPanel(), "Center");
-        this.chatPanel.add(this.createInputPanel(), "South");
-        this.canvas = new Canvas(this.uid, this);
-        this.paintPanel.add(this.canvas, "Center");
-        this.b_start.setEnabled(false);
-        this.b_start.addActionListener(new ActionListener() {
+        userPanel.add(b_exit, BorderLayout.SOUTH);
+        chatPanel.setPreferredSize(new Dimension(500, 600));
+        chatPanel.add(createDisplayPanel(), BorderLayout.CENTER);
+        chatPanel.add(createInputPanel(), BorderLayout.SOUTH);
+
+        canvas = new Canvas(uid, this);
+        paintPanel.add(canvas, BorderLayout.CENTER);
+        b_start.setEnabled(false);
+        b_start.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                MainDisplay.this.send(new ChatMsg(MainDisplay.this.uid, 256, MainDisplay.this.orderIndex));
-                MainDisplay.this.b_start.setVisible(false);
+                send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex));
+                b_start.setVisible(false);
             }
         });
-        this.paintPanel.add(this.b_start, "South");
-        this.mainPanel.add(this.chatPanel, "East");
-        this.mainPanel.add(this.paintPanel, "Center");
-        this.mainPanel.add(this.userPanel, "West");
-        this.mainPanel.add(this.vocaPanel, "North");
-        this.vocaPanel.setVisible(false);
-        this.add(this.mainPanel);
+        paintPanel.add(b_start, BorderLayout.SOUTH);
+
+        mainPanel.add(chatPanel, BorderLayout.EAST);
+        mainPanel.add(paintPanel, BorderLayout.CENTER);
+        mainPanel.add(userPanel, BorderLayout.WEST);
+        mainPanel.add(vocaPanel, BorderLayout.NORTH);
+        vocaPanel.setVisible(false);
+        add(mainPanel);
     }
 
     private JPanel createUserInfoPanel() {
@@ -158,26 +160,26 @@ public class MainDisplay extends JFrame {
     }
 
     public void startTimerFromServer() {
-        if (this.timer != null) {
-            this.timer.cancel();
+        if (timer != null) {
+            timer.cancel();
         }
 
-        if (this.uid.equals(this.currentDrawer)) {
-            this.t_input.setEnabled(false);
+        if (uid.equals(currentDrawer)) {
+            t_input.setEnabled(false);
         }
 
-        this.remainingSeconds = 80;
-        this.timer = new Timer();
-        this.timer.scheduleAtFixedRate(new TimerTask() {
+        remainingSeconds = 80;
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 SwingUtilities.invokeLater(() -> {
-                    if (MainDisplay.this.remainingSeconds > 0) {
-                        --MainDisplay.this.remainingSeconds;
-                        MainDisplay.this.timerLabel.setText(String.valueOf(MainDisplay.this.remainingSeconds));
+                    if (remainingSeconds > 0) {
+                        --remainingSeconds;
+                        timerLabel.setText(String.valueOf(remainingSeconds));
                     } else {
-                        MainDisplay.this.vocaPanel.setVisible(false);
-                        MainDisplay.this.canvas.setClean();
-                        MainDisplay.this.nextDrawer();
+                        vocaPanel.setVisible(false);
+                        canvas.setClean();
+                        nextDrawer();
                     }
 
                 });
@@ -186,36 +188,36 @@ public class MainDisplay extends JFrame {
     }
 
     public void selectVoca() {
-        if (this.timer != null) {
-            this.timer.cancel();
+        if (timer != null) {
+            timer.cancel();
         }
 
-        this.remainingSeconds = 15;
-        this.timer = new Timer();
-        if (this.uid.equals(this.currentDrawer)) {
-            this.t_input.setEnabled(false);
-            this.loadRandomWords();
+        remainingSeconds = 15;
+        timer = new Timer();
+        if (uid.equals(currentDrawer)) {
+            t_input.setEnabled(false);
+            loadRandomWords();
         }
 
         this.timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 SwingUtilities.invokeLater(() -> {
-                    if (MainDisplay.this.remainingSeconds > 0) {
-                        --MainDisplay.this.remainingSeconds;
-                        MainDisplay.this.timerLabel.setText(String.valueOf(MainDisplay.this.remainingSeconds));
+                    if (remainingSeconds > 0) {
+                        --remainingSeconds;
+                        timerLabel.setText(String.valueOf(remainingSeconds));
                     } else {
-                        if (MainDisplay.this.uid.equals(MainDisplay.this.currentDrawer)) {
-                            Component[] components = MainDisplay.this.vocaPanel.getComponents();
+                        if (uid.equals(currentDrawer)) {
+                            Component[] components = vocaPanel.getComponents();
                             if (components.length > 0) {
                                 JButton randomButton = (JButton)components[(new Random()).nextInt(components.length)];
-                                MainDisplay.this.selectedWord = randomButton.getText();
-                                MainDisplay.this.resetVocaPanelWithSelectedWord(MainDisplay.this.selectedWord);
-                                MainDisplay.this.paintPanel.setVisible(true);
-                                MainDisplay.this.send(new ChatMsg(MainDisplay.this.uid, 512, MainDisplay.this.selectedWord));
+                                selectedWord = randomButton.getText();
+                                resetVocaPanelWithSelectedWord(selectedWord);
+                                paintPanel.setVisible(true);
+                                send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord));
                             }
                         }
 
-                        MainDisplay.this.timer.cancel();
+                        timer.cancel();
                     }
 
                 });
@@ -227,8 +229,8 @@ public class MainDisplay extends JFrame {
         try {
             List<String> words = Files.readAllLines(Paths.get("words.txt"));
             Random random = new Random();
-            this.vocaPanel.removeAll();
-            this.vocaPanel.setLayout(new GridLayout(1, 3));
+            vocaPanel.removeAll();
+            vocaPanel.setLayout(new GridLayout(1, 3));
             Set<String> selectedWords = new HashSet();
 
             for(int i = 0; i < 3; ++i) {
@@ -238,21 +240,21 @@ public class MainDisplay extends JFrame {
                     final JButton wordButton = new JButton(randomWord);
                     wordButton.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
-                            MainDisplay.this.selectedWord = wordButton.getText();
-                            MainDisplay.this.resetVocaPanelWithSelectedWord(MainDisplay.this.selectedWord);
-                            MainDisplay.this.timer.cancel();
-                            MainDisplay.this.paintPanel.setVisible(true);
-                            MainDisplay.this.send(new ChatMsg(MainDisplay.this.uid, 512, MainDisplay.this.selectedWord));
+                            selectedWord = wordButton.getText();
+                            resetVocaPanelWithSelectedWord(selectedWord);
+                            timer.cancel();
+                            paintPanel.setVisible(true);
+                            send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord));
                         }
                     });
-                    this.vocaPanel.add(wordButton);
+                    vocaPanel.add(wordButton);
                 }
             }
 
-            this.vocaPanel.revalidate();
-            this.vocaPanel.repaint();
-            this.paintPanel.setVisible(false);
-            this.vocaPanel.setVisible(true);
+            vocaPanel.revalidate();
+            vocaPanel.repaint();
+            paintPanel.setVisible(false);
+            vocaPanel.setVisible(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -260,282 +262,281 @@ public class MainDisplay extends JFrame {
     }
 
     private void resetVocaPanelWithSelectedWord(String word) {
-        this.vocaPanel.removeAll();
+        vocaPanel.removeAll();
         JLabel wordLabel = new JLabel(word, 0);
         wordLabel.setFont(new Font("Serif", 1, 20));
         wordLabel.setHorizontalAlignment(0);
-        this.vocaPanel.setLayout(new BorderLayout());
-        this.vocaPanel.add(wordLabel, "Center");
-        this.vocaPanel.setVisible(true);
-        this.vocaPanel.revalidate();
-        this.vocaPanel.repaint();
+        vocaPanel.setLayout(new BorderLayout());
+        vocaPanel.add(wordLabel, BorderLayout.CENTER);
+        vocaPanel.setVisible(true);
+        vocaPanel.revalidate();
+        vocaPanel.repaint();
     }
 
     private void startDrawing() {
-        this.selectVoca();
+        selectVoca();
     }
 
     public void nextDrawer() {
-        if (this.currentDrawer != null) {
-            this.userColorMap.put(this.currentDrawer, 0);
+        if (currentDrawer != null) {
+            userColorMap.put(currentDrawer, 0);
         }
 
         this.updateUserInfoPanel();
-        if (this.uid.equals(this.currentDrawer)) {
-            this.t_input.setEnabled(true);
-            this.send(new ChatMsg(this.uid, 256, this.orderIndex % this.userList.size()));
+        if (uid.equals(currentDrawer)) {
+            t_input.setEnabled(true);
+            send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
         }
 
     }
 
     public void setCurrentDrawer(String userName) {
-        this.userColorMap.put(this.currentDrawer, 0);
-        this.userColorMap.put(userName, 1);
-        this.updateUserInfoPanel();
-        this.currentDrawer = userName;
-        this.canvas.updateToolVisibility();
+        userColorMap.put(currentDrawer, 0);
+        userColorMap.put(userName, 1);
+        updateUserInfoPanel();
+        currentDrawer = userName;
+        canvas.updateToolVisibility();
     }
 
     public String getCurrentDrawer() {
-        return this.currentDrawer;
+        return currentDrawer;
     }
 
     public String getUid() {
-        return this.uid;
+        return uid;
     }
 
     public void addUserInfo(String userName) {
-        if (this.userList.size() < 2) {
-            this.canvas.setClean();
-            this.b_start.setVisible(true);
-            this.b_start.setEnabled(true);
-            this.currentDrawer = null;
+        if (userList.size() < 2) {
+            canvas.setClean();
+            b_start.setVisible(true);
+            b_start.setEnabled(true);
+            currentDrawer = null;
         }
 
-        this.canvas.setShapeString();
-        this.canvas.setClean();
-        if (!this.userColorMap.containsKey(userName)) {
-            this.userColorMap.put(userName, 0);
+        canvas.setShapeString();
+        canvas.setClean();
+        if (!userColorMap.containsKey(userName)) {
+            userColorMap.put(userName, 0);
         }
 
-        if (!this.userScores.containsKey(userName)) {
-            this.userScores.put(userName, 0);
+        if (!userScores.containsKey(userName)) {
+            userScores.put(userName, 0);
         }
 
-        int userColorIndex = (Integer)this.userColorMap.get(userName) % USER_COLORS.length;
+        int userColorIndex = userColorMap.get(userName) % USER_COLORS.length;
         Color userColor = USER_COLORS[userColorIndex];
         RoundedLabel roundedLabel;
-        if (this.uid.equals(userName)) {
-            roundedLabel = new RoundedLabel(userName + "(you)", Integer.toString((Integer)this.userScores.get(userName)), userColor, Color.BLACK);
+        if (uid.equals(userName)) {
+            roundedLabel = new RoundedLabel(userName + "(you)", Integer.toString(userScores.get(userName)), userColor, Color.BLACK);
         } else {
-            roundedLabel = new RoundedLabel(userName, Integer.toString((Integer)this.userScores.get(userName)), userColor, Color.BLACK);
+            roundedLabel = new RoundedLabel(userName, Integer.toString(userScores.get(userName)), userColor, Color.BLACK);
         }
 
-        this.userInfoPanel.add(roundedLabel);
-        this.userInfoPanel.revalidate();
-        this.userInfoPanel.repaint();
-        if (this.userList.size() >= 2) {
-            if (this.uid.equals(this.userList.get(0))) {
-                this.b_start.setEnabled(true);
+        userInfoPanel.add(roundedLabel);
+        userInfoPanel.revalidate();
+        userInfoPanel.repaint();
+        if (userList.size() >= 2) {
+            if (uid.equals(userList.get(0))) {
+                b_start.setEnabled(true);
             } else {
-                this.b_start.setVisible(false);
+                b_start.setVisible(false);
             }
         } else {
-            this.b_start.setEnabled(false);
+            b_start.setEnabled(false);
         }
 
     }
 
     private JPanel createDisplayPanel() {
         JPanel p = new JPanel(new BorderLayout());
-        this.document = new DefaultStyledDocument();
-        this.t_display = new JTextPane(this.document);
-        this.t_display.setEditable(false);
-        p.add(new JScrollPane(this.t_display), "Center");
+        document = new DefaultStyledDocument();
+        t_display = new JTextPane(document);
+        t_display.setEditable(false);
+        p.add(new JScrollPane(t_display), BorderLayout.CENTER);
         return p;
     }
 
     private void connectToServer() throws UnknownHostException, IOException {
-        this.socket = new Socket();
-        SocketAddress sa = new InetSocketAddress(this.serverAddress, this.serverPort);
-        this.socket.connect(sa, 3000);
-        this.out = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
-        this.receiveThread = new Thread(new Runnable() {
+        socket = new Socket();
+        SocketAddress sa = new InetSocketAddress(serverAddress, serverPort);
+        socket.connect(sa, 3000);
+        out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        receiveThread = new Thread(new Runnable() {
             private ObjectInputStream in;
             private Map<String, Integer> receivedScores;
 
             private void receiveMessage() {
                 try {
-                    ChatMsg inMsg = (ChatMsg)this.in.readObject();
+                    ChatMsg inMsg = (ChatMsg)in.readObject();
                     if (inMsg == null) {
-                        MainDisplay.this.disconnect();
+                        disconnect();
                         return;
                     }
 
                     switch (inMsg.mode) {
-                        case 4:
-                            MainDisplay.this.printDisplay(inMsg.message);
+                        case ChatMsg.MODE_ENTER:
+                            printDisplay(inMsg.message);
                             break;
-                        case 16:
-                            MainDisplay.this.printDisplay(inMsg.userID + ": " + inMsg.message);
+                        case ChatMsg.MODE_TX_STRING:
+                            printDisplay(inMsg.userID + ": " + inMsg.message);
                             break;
-                        case 32:
-                            this.receivedScores = inMsg.userScores;
-                            MainDisplay.this.userScores.clear();
-                            MainDisplay.this.userScores.putAll(this.receivedScores);
-                            MainDisplay.this.updateUserInfoPanel();
+                        case ChatMsg.MODE_TX_USERSCORE:
+                            receivedScores = inMsg.userScores;
+                            userScores.clear();
+                            userScores.putAll(receivedScores);
+                            updateUserInfoPanel();
                             break;
-                        case 48:
-                            if (MainDisplay.this.uid.equals(inMsg.userID)) {
-                                MainDisplay.this.printDisplay(MainDisplay.this.uid + " 가 정답을 맞추었습니다.");
+                        case ChatMsg.MODE_TX_CORRECT:
+                            if (uid.equals(inMsg.userID)) {
+                                printDisplay(uid + " 가 정답을 맞추었습니다.");
                             }
 
-                            this.receivedScores = inMsg.userScores;
-                            MainDisplay.this.userScores.clear();
-                            MainDisplay.this.userScores.putAll(this.receivedScores);
-                            if (MainDisplay.this.uid.equals(MainDisplay.this.currentDrawer)) {
-                                MainDisplay.this.t_input.setEnabled(true);
+                            receivedScores = inMsg.userScores;
+                            userScores.clear();
+                            userScores.putAll(receivedScores);
+                            if (uid.equals(currentDrawer)) {
+                                t_input.setEnabled(true);
                             }
 
-                            for(String user : MainDisplay.this.userList) {
-                                if ((Integer)MainDisplay.this.userScores.get(user) == 4) {
-                                    MainDisplay.this.printDisplay(user + "가 승리하였습니다.");
-                                    MainDisplay.this.send(new ChatMsg(MainDisplay.this.uid, 96));
+                            for(String user : userList) {
+                                if (userScores.get(user) == 4) {
+                                    printDisplay(user + "가 승리하였습니다.");
+                                    send(new ChatMsg(uid, ChatMsg.MODE_TX_RESET));
                                     break;
                                 }
                             }
 
-                            MainDisplay.this.remainingSeconds = 1;
-                            MainDisplay.this.canvas.setClean();
-                            MainDisplay.this.updateUserInfoPanel();
+                            remainingSeconds = 1;
+                            canvas.setClean();
+                            updateUserInfoPanel();
                             break;
-                        case 64:
-                            MainDisplay.this.printDisplay(inMsg.image);
+                        case ChatMsg.MODE_TX_IMAGE:
+                            printDisplay(inMsg.image);
                             break;
-                        case 80:
-                            MainDisplay.this.paintPanel.setVisible(true);
-                            MainDisplay.this.vocaPanel.setVisible(false);
-                            MainDisplay.this.b_start.setVisible(true);
-                            MainDisplay.this.orderIndex = -1;
-                            MainDisplay.this.userScores.clear();
-                            MainDisplay.this.userScores.putAll(inMsg.userScores);
-                            MainDisplay.this.canvas.setClean();
-                            MainDisplay.this.timer.cancel();
-                            MainDisplay.this.timerLabel.setText("timer");
+                        case ChatMsg.MODE_TX_END:
+                            paintPanel.setVisible(true);
+                            vocaPanel.setVisible(false);
+                            b_start.setVisible(true);
+                            orderIndex = -1;
+                            userScores.clear();
+                            userScores.putAll(inMsg.userScores);
+                            canvas.setClean();
+                            timer.cancel();
+                            timerLabel.setText("timer");
 
-                            for(String user : MainDisplay.this.userList) {
-                                MainDisplay.this.userColorMap.put(user, 0);
-                                MainDisplay.this.updateUserInfoPanel();
+                            for(String user : userList) {
+                                userColorMap.put(user, 0);
+                                updateUserInfoPanel();
                             }
 
-                            if (MainDisplay.this.uid.equals(MainDisplay.this.userList.get(0))) {
-                                MainDisplay.this.b_start.setVisible(true);
-                                MainDisplay.this.b_start.setEnabled(true);
+                            if (uid.equals(userList.get(0))) {
+                                b_start.setVisible(true);
+                                b_start.setEnabled(true);
                             }
                             break;
-                        case 128:
-                            MainDisplay.this.canvas.drawing(inMsg.x1, inMsg.y1, inMsg.x2, inMsg.y2, inMsg.color, inMsg.stroke, inMsg.shapeString);
+                        case ChatMsg.MODE_TX_DRAW:
+                            canvas.drawing(inMsg.x1, inMsg.y1, inMsg.x2, inMsg.y2, inMsg.color, inMsg.stroke, inMsg.shapeString);
                             break;
-                        case 153:
-                            MainDisplay.this.userList.clear();
-                            MainDisplay.this.userList.addAll(inMsg.users);
-                            MainDisplay.this.userInfoPanel.removeAll();
+                        case ChatMsg.MODE_TX_USER:
+                            userList.clear();
+                            userList.addAll(inMsg.users);
+                            userInfoPanel.removeAll();
+                            for(String user : userList) {
+                                addUserInfo(user);
+                            }
 
-                            for(String user : MainDisplay.this.userList) {
-                                MainDisplay.this.addUserInfo(user);
-                            }
-
-                            MainDisplay.this.userInfoPanel.revalidate();
-                            MainDisplay.this.userInfoPanel.repaint();
+                            userInfoPanel.revalidate();
+                            userInfoPanel.repaint();
                             break;
-                        case 256:
-                            MainDisplay.this.vocaPanel.setVisible(false);
-                            MainDisplay.this.orderIndex = inMsg.order % MainDisplay.this.userList.size();
-                            MainDisplay.this.printDisplay("지금 턴 index: " + MainDisplay.this.orderIndex);
-                            MainDisplay.this.setCurrentDrawer((String)MainDisplay.this.userList.get(MainDisplay.this.orderIndex));
-                            if (MainDisplay.this.uid.equals(MainDisplay.this.userList.get(MainDisplay.this.orderIndex))) {
-                                MainDisplay.this.selectVoca();
+                        case ChatMsg.MODE_TX_ORDER:
+                            vocaPanel.setVisible(false);
+                            orderIndex = inMsg.order % userList.size();
+                            setCurrentDrawer(userList.get(orderIndex));
+                            printDisplay("지금 턴 : " + currentDrawer);
+                            if (uid.equals(userList.get(orderIndex))) {
+                                selectVoca();
                             }
                             break;
-                        case 512:
+                        case ChatMsg.MODE_TX_START:
                             String displayWord = inMsg.message;
                             System.out.println("Received word: " + displayWord);
-                            MainDisplay.this.resetVocaPanelWithSelectedWord(displayWord);
+                            resetVocaPanelWithSelectedWord(displayWord);
                     }
                 } catch (IOException var5) {
-                    MainDisplay.this.printDisplay("연결을 종료했습니다.");
+                    printDisplay("연결을 종료했습니다.");
                 } catch (ClassNotFoundException var6) {
-                    MainDisplay.this.printDisplay("잘못된 객체가 전달되었습니다.");
+                    printDisplay("잘못된 객체가 전달되었습니다.");
                 }
 
             }
 
             public void run() {
                 try {
-                    this.in = new ObjectInputStream(new BufferedInputStream(MainDisplay.this.socket.getInputStream()));
-                } catch (IOException var2) {
-                    MainDisplay.this.printDisplay("입력 스트림이 열리지 않음");
+                    in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+                } catch (IOException e) {
+                    printDisplay("입력 스트림이 열리지 않음");
                 }
 
-                while(MainDisplay.this.receiveThread == Thread.currentThread()) {
-                    this.receiveMessage();
+                while(receiveThread == Thread.currentThread()) {
+                    receiveMessage();
                 }
 
             }
         });
-        this.receiveThread.start();
+        receiveThread.start();
     }
 
     private void updateUserInfoPanel() {
-        this.userInfoPanel.removeAll();
+        userInfoPanel.removeAll();
 
-        for(String user : this.userList) {
-            this.addUserInfo(user);
+        for(String user : userList) {
+            addUserInfo(user);
         }
 
-        this.userInfoPanel.revalidate();
-        this.userInfoPanel.repaint();
+        userInfoPanel.revalidate();
+        userInfoPanel.repaint();
     }
 
     private JPanel createInputPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        this.t_input = new JTextField(30);
-        this.t_input.addActionListener(new ActionListener() {
+        t_input = new JTextField(30);
+        t_input.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                MainDisplay.this.sendMessage();
+                sendMessage();
             }
         });
-        this.b_send.addActionListener(new ActionListener() {
+        b_send.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                MainDisplay.this.sendMessage();
+                sendMessage();
             }
         });
-        panel.add(this.t_input, "Center");
+        panel.add(t_input, BorderLayout.CENTER);
         JPanel p_button = new JPanel(new GridLayout(1, 0));
-        p_button.add(this.b_send);
-        panel.add(p_button, "East");
-        this.t_input.setEnabled(true);
-        this.b_send.setEnabled(true);
+        p_button.add(b_send);
+        panel.add(p_button, BorderLayout.EAST);
+        t_input.setEnabled(true);
+        b_send.setEnabled(true);
         return panel;
     }
 
     public void printDisplay(String msg) {
-        int len = this.t_display.getDocument().getLength();
+        int len = t_display.getDocument().getLength();
 
         try {
-            this.document.insertString(len, msg + "\n", (AttributeSet)null);
+            document.insertString(len, msg + "\n", null);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
 
-        this.t_display.setCaretPosition(len);
+        t_display.setCaretPosition(len);
     }
 
     private void printDisplay(BufferedImage msg) {
-        int len = this.t_display.getDocument().getLength();
+        int len = t_display.getDocument().getLength();
 
         try {
-            this.document.insertString(len, String.valueOf(msg) + "\n", (AttributeSet)null);
+            document.insertString(len, String.valueOf(msg) + "\n", null);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
@@ -544,11 +545,11 @@ public class MainDisplay extends JFrame {
     }
 
     private void disconnect() {
-        this.send(new ChatMsg(this.uid, 2));
+        send(new ChatMsg(uid, ChatMsg.MODE_LOGOUT));
 
         try {
-            this.receiveThread = null;
-            this.socket.close();
+            receiveThread = null;
+            socket.close();
         } catch (IOException e) {
             System.err.println("클라이언트 닫기 오류> " + e.getMessage());
             System.exit(-1);
@@ -558,8 +559,8 @@ public class MainDisplay extends JFrame {
 
     private void send(ChatMsg msg) {
         try {
-            this.out.writeObject(msg);
-            this.out.flush();
+            out.writeObject(msg);
+            out.flush();
         } catch (IOException e) {
             System.err.println("클라이언트 일반 전송 오류> " + e.getMessage());
         }
@@ -567,20 +568,20 @@ public class MainDisplay extends JFrame {
     }
 
     public void sendDrawing(String uid, int x1, int y1, int x2, int y2, Color color, float stroke, String shapeString) {
-        this.send(new ChatMsg(uid, 128, x1, y1, x2, y2, color, stroke, shapeString));
+        send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAW, x1, y1, x2, y2, color, stroke, shapeString));
     }
 
     private void sendMessage() {
-        String message = this.t_input.getText();
+        String message = t_input.getText();
         if (!message.isEmpty()) {
-            this.send(new ChatMsg(this.uid, 16, message));
-            this.t_input.setText("");
+            send(new ChatMsg(uid, ChatMsg.MODE_TX_STRING, message));
+            t_input.setText("");
         }
     }
 
     private void sendUserID() {
-        this.send(new ChatMsg(this.uid, 1));
-        this.send(new ChatMsg(this.uid, 153, this.userList));
+        send(new ChatMsg(uid, ChatMsg.MODE_LOGIN));
+        send(new ChatMsg(uid, ChatMsg.MODE_TX_USER, userList));
     }
 
     static {
@@ -598,28 +599,28 @@ public class MainDisplay extends JFrame {
             this.score = score;
             this.backgroundColor = backgroundColor;
             this.textColor = textColor;
-            this.setOpaque(false);
-            this.setPreferredSize(new Dimension(190, 100));
-            this.setMaximumSize(new Dimension(190, 100));
+            setOpaque(false);
+            setPreferredSize(new Dimension(190, 100));
+            setMaximumSize(new Dimension(190, 100));
         }
 
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D)g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(this.backgroundColor);
-            g2.fillRoundRect(0, 0, this.getWidth() - 1, this.getHeight() - 1, 20, 20);
+            g2.setColor(backgroundColor);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
             g2.setColor(Color.BLACK);
-            g2.drawRoundRect(0, 0, this.getWidth() - 1, this.getHeight() - 1, 20, 20);
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
             FontMetrics fm = g2.getFontMetrics();
-            g2.setColor(this.textColor);
+            g2.setColor(textColor);
             g2.setFont(new Font("Serif", 1, 20));
-            int xName = (this.getWidth() - fm.stringWidth(this.userName)) / 2;
-            int yName = this.getHeight() / 2 - fm.getDescent();
-            g2.drawString(this.userName, xName - 10, yName - 10);
-            int xScore = (this.getWidth() - fm.stringWidth(this.score)) / 2;
-            int yScore = this.getHeight() / 2 + fm.getAscent();
-            g2.drawString(this.score, xScore - 10, yScore + 10);
+            int xName = (getWidth() - fm.stringWidth(userName)) / 2;
+            int yName = getHeight() / 2 - fm.getDescent();
+            g2.drawString(userName, xName - 10, yName - 10);
+            int xScore = (getWidth() - fm.stringWidth(score)) / 2;
+            int yScore = getHeight() / 2 + fm.getAscent();
+            g2.drawString(score, xScore - 10, yScore + 10);
         }
     }
 }

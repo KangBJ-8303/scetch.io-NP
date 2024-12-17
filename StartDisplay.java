@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.InetAddress;
+import java.util.Random;
 
 public class StartDisplay extends JFrame {
 
@@ -26,7 +27,7 @@ public class StartDisplay extends JFrame {
     }
 
     private void buildGUI() {
-        Image backgroundImage = loadImage("images/sketch.png"); // 텍스트 필드 배경 이미지 경로
+        Image backgroundImage = loadImage("resources/images/sketch.png"); // 텍스트 필드 배경 이미지 경로
         setContentPane(new BackgroundPanel(backgroundImage)); // 창 전체 배경 이미지 설정
 
         setLayout(null); // null 레이아웃 설정
@@ -36,7 +37,10 @@ public class StartDisplay extends JFrame {
     }
 
     private void createInfoPanel() {
-        t_userID = new UnderlineTextField("guest" + getLocalAddr().split("\\.")[3]);
+        Random random = new Random();
+        int randomNumber = random.nextInt(90000) + 10000;
+
+        t_userID = new UnderlineTextField("guest" + randomNumber);
         t_userID.setBounds(430, 300, 100, 30); // 원하는 좌표와 크기로 설정
 
         add(t_userID);

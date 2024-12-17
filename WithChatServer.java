@@ -42,28 +42,28 @@ public class WithChatServer extends JFrame {
     public WithChatServer(int port) {
         super("Server");
         this.port = port;
-        this.buildGUI();
-        this.acceptThread = new Thread(new Runnable() {
+        buildGUI();
+        acceptThread = new Thread(new Runnable() {
             public void run() {
-                WithChatServer.this.startServer();
+                startServer();
             }
         });
-        this.acceptThread.start();
-        this.setBounds(600, 80, 900, 900);
-        this.setDefaultCloseOperation(3);
-        this.setVisible(true);
+        acceptThread.start();
+        setBounds(600, 80, 900, 900);
+        setDefaultCloseOperation(3);
+        setVisible(true);
     }
 
     private void buildGUI() {
-        this.add(this.createDisplayPanel(), "Center");
-        this.add(this.createControlPanel(), "South");
+        add(createDisplayPanel(), "Center");
+        add(createControlPanel(), "South");
     }
 
     private JPanel createDisplayPanel() {
-        this.t_display = new JTextArea();
-        this.t_display.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(this.t_display);
-        scrollPane.setSize(this.t_display.getWidth(), this.t_display.getHeight());
+        t_display = new JTextArea();
+        t_display.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(t_display);
+        scrollPane.setSize(t_display.getWidth(), t_display.getHeight());
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(scrollPane, "Center");
         return panel;
@@ -71,14 +71,14 @@ public class WithChatServer extends JFrame {
 
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new GridLayout(1, 0));
-        this.b_exit = new JButton("종료");
-        this.b_exit.addActionListener(new ActionListener() {
+        b_exit = new JButton("종료");
+        b_exit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                WithChatServer.this.disconnect();
+                disconnect();
                 System.exit(-1);
             }
         });
-        panel.add(this.b_exit);
+        panel.add(b_exit);
         return panel;
     }
 
@@ -86,19 +86,19 @@ public class WithChatServer extends JFrame {
         Socket clientSocket = null;
 
         try {
-            this.serverSocket = new ServerSocket(this.port);
-            this.printDisplay("서버가 시작되었습니다.");
+            serverSocket = new ServerSocket(port);
+            printDisplay("서버가 시작되었습니다.");
 
-            while(this.acceptThread == Thread.currentThread()) {
-                clientSocket = this.serverSocket.accept();
+            while(acceptThread == Thread.currentThread()) {
+                clientSocket = serverSocket.accept();
                 String cAddr = clientSocket.getInetAddress().getHostAddress();
-                this.printDisplay("클라이언트가 연결되었습니다: " + cAddr);
+                printDisplay("클라이언트가 연결되었습니다: " + cAddr);
                 ClientHandler cHandler = new ClientHandler(clientSocket);
-                this.users.add(cHandler);
+                users.add(cHandler);
                 cHandler.start();
             }
-        } catch (SocketException var14) {
-            this.printDisplay("서버 소켓 종료");
+        } catch (SocketException e) {
+            printDisplay("서버 소켓 종료");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -107,8 +107,8 @@ public class WithChatServer extends JFrame {
                     clientSocket.close();
                 }
 
-                if (this.serverSocket != null) {
-                    this.serverSocket.close();
+                if (serverSocket != null) {
+                    serverSocket.close();
                 }
             } catch (IOException e) {
                 System.err.println("서버 닫기 오류> " + e.getMessage());
@@ -121,8 +121,8 @@ public class WithChatServer extends JFrame {
 
     private void disconnect() {
         try {
-            this.acceptThread = null;
-            this.serverSocket.close();
+            acceptThread = null;
+            serverSocket.close();
         } catch (IOException e) {
             System.err.println("서버 소켓 닫기 오류> " + e.getMessage());
             System.exit(-1);
@@ -131,12 +131,12 @@ public class WithChatServer extends JFrame {
     }
 
     private void printDisplay(String msg) {
-        this.t_display.append(msg + "\n");
-        this.t_display.setCaretPosition(this.t_display.getDocument().getLength());
+        t_display.append(msg + "\n");
+        t_display.setCaretPosition(t_display.getDocument().getLength());
     }
 
     private boolean correctAnswer(String msg) {
-        return this.selectedWord.equals(msg);
+        return selectedWord.equals(msg);
     }
 
     public static void main(String[] args) {
@@ -156,130 +156,124 @@ public class WithChatServer extends JFrame {
         private void receiveMessages(Socket socket) {
             try {
                 ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-                this.out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
                 ChatMsg msg;
                 while((msg = (ChatMsg)in.readObject()) != null) {
-                    if (msg.mode == 1) {
-                        this.uid = msg.userID;
-                        WithChatServer.this.userIDs.add(this.uid);
-                        WithChatServer.this.printDisplay("새 참가자: " + this.uid);
-                        WithChatServer.this.printDisplay("현재 참가자 수: " + WithChatServer.this.users.size());
-                        ChatMsg joinMessage = new ChatMsg("", 4, this.uid + "가 접속했습니다");
-                        this.broadcasting(joinMessage);
+                    if (msg.mode == ChatMsg.MODE_LOGIN) {
+                        uid = msg.userID;
+                        userIDs.add(uid);
+
+                        printDisplay("새 참가자: " + uid);
+                        printDisplay("현재 참가자 수: " + users.size());
+                        ChatMsg joinMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 접속했습니다");
+                        broadcasting(joinMessage);
                     } else {
-                        if (msg.mode == 2) {
-                            WithChatServer.this.userScores.remove(this.uid);
-                            WithChatServer.this.userIDs.remove(this.uid);
-                            WithChatServer.this.users.removeElement(this);
-                            ChatMsg logoutMessage = new ChatMsg("", 4, this.uid + "가 나갔습니다.");
-                            this.broadcasting(logoutMessage);
-                            ChatMsg userUpdateMessage = new ChatMsg("", 153, new ArrayList(WithChatServer.this.userIDs));
-                            this.broadcasting(userUpdateMessage);
+                        if (msg.mode == ChatMsg.MODE_LOGOUT) {
+                            userScores.remove(uid);
+                            userIDs.remove(uid);
+                            users.removeElement(this);
+                            ChatMsg logoutMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
+                            broadcasting(logoutMessage);
+                            ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList(userIDs));
+                            broadcasting(userUpdateMessage);
                             break;
                         }
 
-                        if (msg.mode == 16) {
-                            String message = this.uid + ": " + msg.message;
-                            WithChatServer.this.printDisplay(message);
-                            this.broadcasting(msg);
-                            if (WithChatServer.this.selectedWord != null && WithChatServer.this.correctAnswer(msg.message)) {
-                                int uidScore = (Integer)WithChatServer.this.userScores.get(this.uid) + 1;
-                                WithChatServer.this.userScores.put(this.uid, uidScore);
-                                String currentDrawerUid = (String)WithChatServer.this.userIDs.get(WithChatServer.this.orderIndex % WithChatServer.this.users.size());
-                                int drawerScore = (Integer)WithChatServer.this.userScores.get(currentDrawerUid) + 1;
-                                WithChatServer.this.userScores.put(currentDrawerUid, drawerScore);
+                        if (msg.mode == ChatMsg.MODE_TX_STRING) {
+                            String message = uid + ": " + msg.message;
+                            printDisplay(message);
+                            broadcasting(msg);
+                            if (selectedWord != null && correctAnswer(msg.message)) {
+                                int uidScore = userScores.get(uid) + 1;
+                                userScores.put(uid, uidScore);
+                                String currentDrawerUid = userIDs.get(orderIndex % users.size());
+                                int drawerScore = userScores.get(currentDrawerUid) + 1;
+                                userScores.put(currentDrawerUid, drawerScore);
 
-                                for(String user : WithChatServer.this.userIDs) {
-                                    WithChatServer.this.printDisplay(user + ": " + String.valueOf(WithChatServer.this.userScores.get(user)));
+                                for(String user : userIDs) {
+                                    printDisplay(user + ": " + String.valueOf(userScores.get(user)));
                                 }
 
-                                ChatMsg addScore = new ChatMsg(this.uid, 48, new HashMap(WithChatServer.this.userScores));
-                                WithChatServer.this.printDisplay(this.uid + "에게 점수 1점");
-                                WithChatServer.this.printDisplay(currentDrawerUid + "에게 점수 1점");
-                                this.broadcasting(addScore);
-                                ++WithChatServer.this.orderIndex;
-                                ChatMsg newOrderMsg = new ChatMsg(this.uid, 256, WithChatServer.this.orderIndex);
-                                this.broadcasting(newOrderMsg);
+                                ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT, new HashMap(userScores));
+                                printDisplay(uid + "에게 점수 1점");
+                                printDisplay(currentDrawerUid + "에게 점수 1점");
+                                broadcasting(addScore);
+                                ++orderIndex;
+                                ChatMsg newOrderMsg = new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex);
+                                broadcasting(newOrderMsg);
                             }
-                        } else if (msg.mode == 64) {
-                            this.broadcasting(msg);
-                        } else if (msg.mode == 128) {
-                            this.broadcasting(msg);
-                            WithChatServer var10000 = WithChatServer.this;
-                            String var48 = Integer.toString(msg.x1);
-                            var10000.printDisplay("Server x1: " + var48 + " x2: " + Integer.toString(msg.x2) + " y1: " + Integer.toString(msg.y1) + " y2: " + Integer.toString(msg.y2) + " stroke: " + Float.toString(msg.stroke) + " shape: " + msg.shapeString);
-                        } else if (msg.mode == 153) {
-                            WithChatServer.this.userScores.put(msg.userID, 0);
-
-                            for(String user : WithChatServer.this.userIDs) {
-                                WithChatServer.this.printDisplay("userList : " + user);
+                        } else if (msg.mode == ChatMsg.MODE_TX_IMAGE) {
+                            broadcasting(msg);
+                        } else if (msg.mode == ChatMsg.MODE_TX_DRAW) {
+                            broadcasting(msg);
+                            printDisplay("Server x1: " +Integer.toString(msg.x1) + " x2: " + Integer.toString(msg.x2) + " y1: " + Integer.toString(msg.y1) + " y2: " + Integer.toString(msg.y2) + " stroke: " + Float.toString(msg.stroke) +  " shape: " + msg.shapeString);
+                        } else if (msg.mode == ChatMsg.MODE_TX_USER) {
+                            userScores.put(msg.userID, 0);
+                            for(String user : userIDs) {
+                                printDisplay("userList : " + user);
                             }
 
-                            ChatMsg userScore = new ChatMsg("", 32, new HashMap(WithChatServer.this.userScores));
-                            this.broadcasting(userScore);
-                            ChatMsg userID = new ChatMsg("", 153, new ArrayList(WithChatServer.this.userIDs));
-                            this.broadcasting(userID);
-                        } else if (msg.mode == 256) {
-                            WithChatServer.this.orderIndex = msg.order + 1;
-                            ChatMsg newMsg = new ChatMsg(this.uid, 256, WithChatServer.this.orderIndex);
-                            this.broadcasting(newMsg);
-                        } else if (msg.mode == 512) {
-                            WithChatServer.this.selectedWord = msg.message;
+                            ChatMsg userScore = new ChatMsg("", ChatMsg.MODE_TX_USERSCORE, new HashMap(userScores));
+                            broadcasting(userScore);
+                            ChatMsg userID = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList(userIDs));
+                            broadcasting(userID);
+                        } else if (msg.mode == ChatMsg.MODE_TX_ORDER) {
+                            orderIndex = msg.order + 1;
+                            ChatMsg newMsg = new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex);
+                            broadcasting(newMsg);
+                        } else if (msg.mode == ChatMsg.MODE_TX_START) {
+                            selectedWord = msg.message;
 
-                            for(ClientHandler client : WithChatServer.this.users) {
+                            for(ClientHandler client : users) {
                                 ChatMsg startMsg;
-                                if (client.uid.equals(WithChatServer.this.userIDs.get(WithChatServer.this.orderIndex % WithChatServer.this.users.size()))) {
-                                    startMsg = new ChatMsg(this.uid, 512, WithChatServer.this.selectedWord);
-                                    System.out.println("Sending to drawer: " + WithChatServer.this.selectedWord);
+                                if (client.uid.equals(userIDs.get(orderIndex % users.size()))) {
+                                    startMsg = new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord);
+                                    System.out.println("Sending to drawer: " + selectedWord);
                                 } else {
                                     StringBuilder hiddenWord = new StringBuilder();
 
-                                    for(int i = 0; i < WithChatServer.this.selectedWord.length(); ++i) {
+                                    for(int i = 0; i < selectedWord.length(); ++i) {
                                         hiddenWord.append("_ ");
                                     }
 
-                                    startMsg = new ChatMsg(this.uid, 512, hiddenWord.toString().trim());
+                                    startMsg = new ChatMsg(uid, ChatMsg.MODE_TX_START, hiddenWord.toString().trim());
                                     System.out.println("Sending to others: " + hiddenWord.toString().trim());
                                 }
 
                                 client.send(startMsg);
                             }
-                        } else if (msg.mode == 96) {
-                            for(String user : WithChatServer.this.userIDs) {
-                                WithChatServer.this.userScores.put(user, 0);
+                        } else if (msg.mode == ChatMsg.MODE_TX_RESET) {
+                            for(String user : userIDs) {
+                                userScores.put(user, 0);
                             }
 
-                            ChatMsg reset = new ChatMsg(this.uid, 80, new HashMap(WithChatServer.this.userScores));
-                            this.broadcasting(reset);
+                            ChatMsg reset = new ChatMsg(uid, ChatMsg.MODE_TX_END, new HashMap(userScores));
+                            broadcasting(reset);
                         }
                     }
                 }
-
-                String var49 = this.uid;
-                WithChatServer.this.printDisplay(var49 + " 퇴장. 현재 참가자 수: " + WithChatServer.this.users.size());
-            } catch (IOException var20) {
-                ChatMsg logoutMessage = new ChatMsg(this.uid, 4, this.uid + "가 나갔습니다.");
-                this.broadcasting(logoutMessage);
-                WithChatServer.this.userScores.remove(this.uid);
-                WithChatServer.this.userIDs.remove(this.uid);
-                WithChatServer.this.users.removeElement(this);
-                if (WithChatServer.this.userIDs.size() < 2) {
-                    for(String user : WithChatServer.this.userIDs) {
-                        WithChatServer.this.userScores.put(user, 0);
+                printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
+            } catch (IOException e) {
+                ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
+                broadcasting(logoutMessage);
+                userScores.remove(uid);
+                userIDs.remove(uid);
+                users.removeElement(this);
+                if (userIDs.size() < 2) {
+                    for(String user : userIDs) {
+                        userScores.put(user, 0);
                     }
 
-                    ChatMsg reset = new ChatMsg(this.uid, 80, new HashMap(WithChatServer.this.userScores));
-                    this.broadcasting(reset);
+                    ChatMsg reset = new ChatMsg(uid, ChatMsg.MODE_TX_END, new HashMap(userScores));
+                    broadcasting(reset);
                 }
 
-                ChatMsg userUpdateMessage = new ChatMsg("", 153, new ArrayList(WithChatServer.this.userIDs));
-                this.broadcasting(userUpdateMessage);
-                String var10001 = this.uid;
-                WithChatServer.this.printDisplay(var10001 + " 연결 끊김. 현재 참가자 수: " + WithChatServer.this.users.size());
-
-                for(String user : WithChatServer.this.userIDs) {
-                    WithChatServer.this.printDisplay("userList : " + user);
+                ChatMsg userUpdateMessage = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList(userIDs));
+                broadcasting(userUpdateMessage);
+                printDisplay(uid + " 연결 끊김. 현재 참가자 수: " + users.size());
+                for(String user : userIDs) {
+                    printDisplay("userList : " + user);
                 }
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
@@ -297,8 +291,8 @@ public class WithChatServer extends JFrame {
 
         private void send(ChatMsg msg) {
             try {
-                this.out.writeObject(msg);
-                this.out.flush();
+                out.writeObject(msg);
+                out.flush();
             } catch (IOException e) {
                 System.err.println("클라이언트 일반 전송 오류> " + e.getMessage());
             }
@@ -306,14 +300,14 @@ public class WithChatServer extends JFrame {
         }
 
         private void broadcasting(ChatMsg msg) {
-            for(ClientHandler c : WithChatServer.this.users) {
+            for(ClientHandler c : users) {
                 c.send(msg);
             }
 
         }
 
         public void run() {
-            this.receiveMessages(this.clientSocket);
+            receiveMessages(clientSocket);
         }
     }
 }
