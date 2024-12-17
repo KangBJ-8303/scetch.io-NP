@@ -10,19 +10,19 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class ChatMsg implements Serializable {
-    public static final int MODE_LOGIN = 0x01;
-    public static final int MODE_LOGOUT = 0x02;
-    public static final int MODE_ENTER = 0x04;
-    public static final int MODE_TX_STRING = 0x16;
-    public static final int MODE_TX_IMAGE = 0x64;
-    public static final int MODE_TX_DRAW = 0x128;
-    public static final int MODE_TX_USER = 0x153;
-    public static final int MODE_TX_ORDER = 0x256;
-    public static final int MODE_TX_START = 0x512;
-    public static final int MODE_TX_CORRECT = 0x48;
-    public static final int MODE_TX_USERSCORE = 0x32;
-    public static final int MODE_TX_END = 0x80;
-    public static final int MODE_TX_RESET = 0x96;
+    public static final int MODE_LOGIN = 0x01; // 로그인
+    public static final int MODE_LOGOUT = 0x02; // 로그아웃
+    public static final int MODE_ENTER = 0x04; // 입장,퇴장 메세지
+    public static final int MODE_TX_STRING = 0x16; // 문자열 전송
+    public static final int MODE_TX_IMAGE = 0x64; // 이미지 전송(미사용)
+    public static final int MODE_TX_DRAW = 0x128; // 그림 전송
+    public static final int MODE_TX_USER = 0x153; // 유저 목록 전송
+    public static final int MODE_TX_ORDER = 0x256;// 그림 순서
+    public static final int MODE_TX_START = 0x512; // 게임 시작
+    public static final int MODE_TX_CORRECT = 0x48; // 정답 확인
+    public static final int MODE_TX_USERSCORE = 0x32; // 점수 증가
+    public static final int MODE_TX_END = 0x80; // 게임 종료
+    public static final int MODE_TX_RESET = 0x96; // 게임 리셋
     String userID;
     int mode;
     String message;

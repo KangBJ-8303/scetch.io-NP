@@ -5,7 +5,7 @@ import java.awt.event.ActionListener;
 import java.net.InetAddress;
 import java.util.Random;
 
-public class StartDisplay extends JFrame {
+public class StartDisplay extends JFrame { // 시작 화면
 
     private UnderlineTextField t_userID;
     private String serverAddress;
@@ -38,7 +38,7 @@ public class StartDisplay extends JFrame {
 
     private void createInfoPanel() {
         Random random = new Random();
-        int randomNumber = random.nextInt(90000) + 10000;
+        int randomNumber = random.nextInt(90000) + 10000; // 랜덤 5자리 생성
 
         t_userID = new UnderlineTextField("guest" + randomNumber);
         t_userID.setBounds(430, 300, 100, 30); // 원하는 좌표와 크기로 설정
@@ -54,7 +54,7 @@ public class StartDisplay extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
-                new MainDisplay(serverAddress, serverPort, t_userID.getText());
+                new MainDisplay(serverAddress, serverPort, t_userID.getText()); // 게임 입장
             }
         });
 
@@ -88,7 +88,7 @@ public class StartDisplay extends JFrame {
     }
 }
 
-class BackgroundPanel extends JPanel {
+class BackgroundPanel extends JPanel { // 배경 이미지 설정
     private Image backgroundImage;
 
     public BackgroundPanel(Image backgroundImage) {
@@ -102,7 +102,7 @@ class BackgroundPanel extends JPanel {
     }
 }
 
-class TransparentButton extends JButton {
+class TransparentButton extends JButton { //버튼 배경 없애기
     public TransparentButton(String text) {
         super(text);
         setOpaque(false);
@@ -113,7 +113,7 @@ class TransparentButton extends JButton {
     }
 }
 
-class UnderlineTextField extends JTextField {
+class UnderlineTextField extends JTextField { // 텍스트 필드 바닥만 보이게
     public UnderlineTextField(String text) {
         super(text);
         setOpaque(false); // 배경을 투명하게 설정

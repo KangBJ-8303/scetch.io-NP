@@ -1,8 +1,5 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
+//인터넷 참고
+//Order, notOrder, updateToolVisiblity,setShapeString, drawing, setClean추가
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -59,7 +56,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
     }
 
 
-    private void Order(){
+    private void Order(){ // 출제자시 버튼 활성화
         eraseAllButton.setEnabled(true);
         rectButton.setEnabled(true);
         lineButton.setEnabled(true);
@@ -68,7 +65,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         eraseButton.setEnabled(true);
     }
 
-    private void notOrder(){
+    private void notOrder(){ // 나머지는 버튼 비활성화
         eraseAllButton.setEnabled(false);
         rectButton.setEnabled(false);
         lineButton.setEnabled(false);
@@ -77,7 +74,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         eraseButton.setEnabled(false);
     }
 
-    private JPanel createToolPanel() {
+    private JPanel createToolPanel() { // 그림 버튼 툴
         JPanel panel = new JPanel(new GridLayout(2, 6, 5, 5));
         Color backgroundColor = new Color(240, 248, 255);
 
@@ -157,7 +154,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
 
 
 
-    public void updateToolVisibility(){
+    public void updateToolVisibility(){ // 출제자면 버튼 활성화 아니면 비활성화
         if(mainDisplay.getCurrentDrawer().equals(mainDisplay.getUid())){
             Order();
         }
@@ -167,11 +164,11 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
 
     }
 
-    public void setShapeString() {
+    public void setShapeString() { // 펜 초기화
         shapeString = "";
     }
 
-    public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) {
+    public void drawing(int firstX, int firstY, int secondX, int secondY, Color colors, float stroke, String shapeString) { // 서버와 클라이언트 그림 송수신용
 
         width = Math.abs(secondX - firstX);
         height = Math.abs(secondY - firstY);
@@ -217,7 +214,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
         repaint();
     }
 
-    public void setClean() {
+    public void setClean() {  // 캔버스 초기화 용
         setImageBackground(bufferedImage);
     }
 
@@ -230,7 +227,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
     }
 
 
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(MouseEvent e) { //펜이 아닐때 마우스 떨어질 때 그림
 
         if (shapeString != "펜") {
             secondPointer.setLocation(e.getX(), e.getY());
@@ -283,11 +280,11 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
     }
 
 
-    public Dimension getPreferredSize() {
+    public Dimension getPreferredSize() { // 도화지 크기
         return new Dimension(500, 500);
     }
 
-    public void updatePaint() {
+    public void updatePaint() { //그림 업데이트
         width = Math.abs(secondPointer.x - firstPointer.x);
         height = Math.abs(secondPointer.y - firstPointer.y);
 
@@ -341,7 +338,7 @@ public class Canvas extends JPanel implements ActionListener, MouseListener, Mou
 
     }
 
-    public void setImageBackground(BufferedImage bi) {
+    public void setImageBackground(BufferedImage bi) { // 배경 하얀색으로
         this.bufferedImage = bi;
         Graphics2D g = bufferedImage.createGraphics();
         g.setColor(Color.white);

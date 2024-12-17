@@ -119,13 +119,13 @@ public class MainDisplay extends JFrame {
         userPanel.add(timerPanel, BorderLayout.NORTH);
         b_exit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (userList.size() == 2) {
+                if (userList.size() == 2) {// 남은 인원 2명일때 나가면 리셋
                     send(new ChatMsg(uid, ChatMsg.MODE_TX_RESET));
                 }
 
-                disconnect();
+                disconnect();//연결 종료
                 setVisible(false);
-                new StartDisplay(serverAddress, serverPort);
+                new StartDisplay(serverAddress, serverPort); // 시작화면으로
                 dispose();
             }
         });
@@ -153,13 +153,13 @@ public class MainDisplay extends JFrame {
         add(mainPanel);
     }
 
-    private JPanel createUserInfoPanel() {
+    private JPanel createUserInfoPanel() { // 유저 목록 패널 생성
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, 1));
         return panel;
     }
 
-    public void startTimerFromServer() {
+    public void startTimerFromServer() { // 그림 타이머 작동
         if (timer != null) {
             timer.cancel();
         }
@@ -172,7 +172,7 @@ public class MainDisplay extends JFrame {
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
-                SwingUtilities.invokeLater(() -> {
+                SwingUtilities.invokeLater(() -> { // 쓰레드 겹침 방지
                     if (remainingSeconds > 0) {
                         --remainingSeconds;
                         timerLabel.setText(String.valueOf(remainingSeconds));
@@ -187,16 +187,16 @@ public class MainDisplay extends JFrame {
         }, 1000L, 1000L);
     }
 
-    public void selectVoca() {
+    public void selectVoca() { // 단어 선택 시간, 화면
         if (timer != null) {
             timer.cancel();
         }
 
         remainingSeconds = 15;
         timer = new Timer();
-        if (uid.equals(currentDrawer)) {
+        if (uid.equals(currentDrawer)) { // 문제 출제자 일때
             t_input.setEnabled(false);
-            loadRandomWords();
+            loadRandomWords(); // 랜덤 단어 가져오기
         }
 
         this.timer.scheduleAtFixedRate(new TimerTask() {
@@ -206,49 +206,48 @@ public class MainDisplay extends JFrame {
                         --remainingSeconds;
                         timerLabel.setText(String.valueOf(remainingSeconds));
                     } else {
-                        if (uid.equals(currentDrawer)) {
+                        if (uid.equals(currentDrawer)) {// 현재 그림 그리는 사람인지 확인
                             Component[] components = vocaPanel.getComponents();
-                            if (components.length > 0) {
+                            if (components.length > 0) {// 시간내에 못 정했을 경우 vocaPanel에 생성된 컴포넌트를 가져와 랜덤으로 선택
                                 JButton randomButton = (JButton)components[(new Random()).nextInt(components.length)];
                                 selectedWord = randomButton.getText();
                                 resetVocaPanelWithSelectedWord(selectedWord);
                                 paintPanel.setVisible(true);
-                                send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord));
+                                send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord));// 게임 시작(80초)
                             }
                         }
-
-                        timer.cancel();
+                        timer.cancel();//기존 타이머 캔슬
                     }
 
                 });
             }
-        }, 1000L, 1000L);
+        }, 1000L, 1000L);// 1초 마다 반복
     }
 
     private void loadRandomWords() {
         try {
-            List<String> words = Files.readAllLines(Paths.get("words.txt"));
+            List<String> words = Files.readAllLines(Paths.get("words.txt")); // words.txt에서 단어 읽어온후 List에 저장
             Random random = new Random();
             vocaPanel.removeAll();
-            vocaPanel.setLayout(new GridLayout(1, 3));
+            vocaPanel.setLayout(new GridLayout(1, 3)); // 가로로 3칸생성
             Set<String> selectedWords = new HashSet();
 
             for(int i = 0; i < 3; ++i) {
-                String randomWord = (String)words.get(random.nextInt(words.size()));
-                if (!selectedWords.contains(randomWord)) {
-                    selectedWords.add(randomWord);
-                    final JButton wordButton = new JButton(randomWord);
+                String randomWord = (String)words.get(random.nextInt(words.size())); // 리스트에서 랜덤으로 선택
+                if (!selectedWords.contains(randomWord)) {// Set에 랜덤 단어가 이미 있지 않으면
+                    selectedWords.add(randomWord); //단어 추가
+                    final JButton wordButton = new JButton(randomWord);// 단어 버튼 생성
                     wordButton.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
-                            selectedWord = wordButton.getText();
+                            selectedWord = wordButton.getText();// 선택한 단어 저장
                             resetVocaPanelWithSelectedWord(selectedWord);
-                            timer.cancel();
-                            paintPanel.setVisible(true);
-                            send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord));
+                            timer.cancel();// 버튼 눌리면 타이머 종료
+                            paintPanel.setVisible(true); // 그림패널 다시 보이게
+                            send(new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord));// 게임 시작 호출
                         }
                     });
-                    vocaPanel.add(wordButton);
-                }
+                    vocaPanel.add(wordButton);// 버튼 생성
+                }//3개 생성
             }
 
             vocaPanel.revalidate();
@@ -262,7 +261,7 @@ public class MainDisplay extends JFrame {
     }
 
     private void resetVocaPanelWithSelectedWord(String word) {
-        vocaPanel.removeAll();
+        vocaPanel.removeAll();// 버튼 모두 지우기
         JLabel wordLabel = new JLabel(word, 0);
         wordLabel.setFont(new Font("Serif", 1, 20));
         wordLabel.setHorizontalAlignment(0);
@@ -273,29 +272,25 @@ public class MainDisplay extends JFrame {
         vocaPanel.repaint();
     }
 
-    private void startDrawing() {
-        selectVoca();
-    }
-
-    public void nextDrawer() {
-        if (currentDrawer != null) {
+    public void nextDrawer() {// 다음 그리는 유저로 변경
+        if (currentDrawer != null) { // 출제자 없으면 색 하얀색으로
             userColorMap.put(currentDrawer, 0);
         }
 
-        this.updateUserInfoPanel();
-        if (uid.equals(currentDrawer)) {
+        updateUserInfoPanel();// 유저패널 업데이트
+        if (uid.equals(currentDrawer)) { //유저가 출제자 인지
             t_input.setEnabled(true);
-            send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size()));
+            send(new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex % userList.size())); // 순서 변경
         }
 
     }
 
-    public void setCurrentDrawer(String userName) {
-        userColorMap.put(currentDrawer, 0);
-        userColorMap.put(userName, 1);
+    public void setCurrentDrawer(String userName) { // 출제자 선정
+        userColorMap.put(currentDrawer, 0); // 기존 출제자 하얀색으로
+        userColorMap.put(userName, 1); // 새 출제자 파란색으로
         updateUserInfoPanel();
-        currentDrawer = userName;
-        canvas.updateToolVisibility();
+        currentDrawer = userName; // 출제자 변경
+        canvas.updateToolVisibility(); // canvas 툴 업데이트
     }
 
     public String getCurrentDrawer() {
@@ -307,27 +302,27 @@ public class MainDisplay extends JFrame {
     }
 
     public void addUserInfo(String userName) {
-        if (userList.size() < 2) {
+        if (userList.size() < 2) { // 2명 보다 적으면 게임 리셋을 위해 캔버스 클리어
             canvas.setClean();
-            b_start.setVisible(true);
+            b_start.setVisible(true); //시작버튼 다시 사용가능하게
             b_start.setEnabled(true);
-            currentDrawer = null;
+            currentDrawer = null; // 출제자 null 처리
         }
 
-        canvas.setShapeString();
-        canvas.setClean();
-        if (!userColorMap.containsKey(userName)) {
+        canvas.setShapeString(); //펜 초기화
+        canvas.setClean();// 캔버스 초기화
+        if (!userColorMap.containsKey(userName)) {//유저이름이 없으면 배경색 흰색으로 추가
             userColorMap.put(userName, 0);
         }
 
-        if (!userScores.containsKey(userName)) {
+        if (!userScores.containsKey(userName)) { //유저 이름이 없이 없으면 0점으로 초기화
             userScores.put(userName, 0);
         }
 
         int userColorIndex = userColorMap.get(userName) % USER_COLORS.length;
-        Color userColor = USER_COLORS[userColorIndex];
-        RoundedLabel roundedLabel;
-        if (uid.equals(userName)) {
+        Color userColor = USER_COLORS[userColorIndex]; // 유저 색 결정
+        RoundedLabel roundedLabel; // 둥근 라벨 생성
+        if (uid.equals(userName)) { //본인 확인
             roundedLabel = new RoundedLabel(userName + "(you)", Integer.toString(userScores.get(userName)), userColor, Color.BLACK);
         } else {
             roundedLabel = new RoundedLabel(userName, Integer.toString(userScores.get(userName)), userColor, Color.BLACK);
@@ -336,8 +331,8 @@ public class MainDisplay extends JFrame {
         userInfoPanel.add(roundedLabel);
         userInfoPanel.revalidate();
         userInfoPanel.repaint();
-        if (userList.size() >= 2) {
-            if (uid.equals(userList.get(0))) {
+        if (userList.size() >= 2) { // 2명 이상일 경우 스타트
+            if (uid.equals(userList.get(0))) { // 방장만 시작 가능하게
                 b_start.setEnabled(true);
             } else {
                 b_start.setVisible(false);
@@ -348,7 +343,7 @@ public class MainDisplay extends JFrame {
 
     }
 
-    private JPanel createDisplayPanel() {
+    private JPanel createDisplayPanel() { // 채팅 화면
         JPanel p = new JPanel(new BorderLayout());
         document = new DefaultStyledDocument();
         t_display = new JTextPane(document);
@@ -375,19 +370,19 @@ public class MainDisplay extends JFrame {
                     }
 
                     switch (inMsg.mode) {
-                        case ChatMsg.MODE_ENTER:
+                        case ChatMsg.MODE_ENTER: // 입장 퇴장 메세지
                             printDisplay(inMsg.message);
                             break;
-                        case ChatMsg.MODE_TX_STRING:
+                        case ChatMsg.MODE_TX_STRING: // 메세지 전송
                             printDisplay(inMsg.userID + ": " + inMsg.message);
                             break;
-                        case ChatMsg.MODE_TX_USERSCORE:
+                        case ChatMsg.MODE_TX_USERSCORE: // 점수 연동
                             receivedScores = inMsg.userScores;
                             userScores.clear();
                             userScores.putAll(receivedScores);
                             updateUserInfoPanel();
                             break;
-                        case ChatMsg.MODE_TX_CORRECT:
+                        case ChatMsg.MODE_TX_CORRECT: // 정답 확인 증가
                             if (uid.equals(inMsg.userID)) {
                                 printDisplay(uid + " 가 정답을 맞추었습니다.");
                             }
@@ -400,21 +395,21 @@ public class MainDisplay extends JFrame {
                             }
 
                             for(String user : userList) {
-                                if (userScores.get(user) == 4) {
+                                if (userScores.get(user) == 4) { // 원하는 점수 승리
                                     printDisplay(user + "가 승리하였습니다.");
                                     send(new ChatMsg(uid, ChatMsg.MODE_TX_RESET));
                                     break;
                                 }
                             }
 
-                            remainingSeconds = 1;
+                            remainingSeconds = 1; // 다음 순서로 넘어가기 위해 1초로 설정
                             canvas.setClean();
                             updateUserInfoPanel();
                             break;
                         case ChatMsg.MODE_TX_IMAGE:
                             printDisplay(inMsg.image);
                             break;
-                        case ChatMsg.MODE_TX_END:
+                        case ChatMsg.MODE_TX_END: // 게임 종료
                             paintPanel.setVisible(true);
                             vocaPanel.setVisible(false);
                             b_start.setVisible(true);
@@ -435,10 +430,10 @@ public class MainDisplay extends JFrame {
                                 b_start.setEnabled(true);
                             }
                             break;
-                        case ChatMsg.MODE_TX_DRAW:
+                        case ChatMsg.MODE_TX_DRAW: //그림 전송
                             canvas.drawing(inMsg.x1, inMsg.y1, inMsg.x2, inMsg.y2, inMsg.color, inMsg.stroke, inMsg.shapeString);
                             break;
-                        case ChatMsg.MODE_TX_USER:
+                        case ChatMsg.MODE_TX_USER: // 유저 갱신
                             userList.clear();
                             userList.addAll(inMsg.users);
                             userInfoPanel.removeAll();
@@ -449,7 +444,7 @@ public class MainDisplay extends JFrame {
                             userInfoPanel.revalidate();
                             userInfoPanel.repaint();
                             break;
-                        case ChatMsg.MODE_TX_ORDER:
+                        case ChatMsg.MODE_TX_ORDER: // 순서 변경
                             vocaPanel.setVisible(false);
                             orderIndex = inMsg.order % userList.size();
                             setCurrentDrawer(userList.get(orderIndex));
@@ -458,7 +453,7 @@ public class MainDisplay extends JFrame {
                                 selectVoca();
                             }
                             break;
-                        case ChatMsg.MODE_TX_START:
+                        case ChatMsg.MODE_TX_START: // 게임 시작
                             String displayWord = inMsg.message;
                             System.out.println("Received word: " + displayWord);
                             resetVocaPanelWithSelectedWord(displayWord);
@@ -498,7 +493,7 @@ public class MainDisplay extends JFrame {
         userInfoPanel.repaint();
     }
 
-    private JPanel createInputPanel() {
+    private JPanel createInputPanel() { // 입력 패널 생성
         JPanel panel = new JPanel(new BorderLayout());
         t_input = new JTextField(30);
         t_input.addActionListener(new ActionListener() {
@@ -568,7 +563,7 @@ public class MainDisplay extends JFrame {
     }
 
     public void sendDrawing(String uid, int x1, int y1, int x2, int y2, Color color, float stroke, String shapeString) {
-        send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAW, x1, y1, x2, y2, color, stroke, shapeString));
+        send(new ChatMsg(uid, ChatMsg.MODE_TX_DRAW, x1, y1, x2, y2, color, stroke, shapeString)); // 그림 전송
     }
 
     private void sendMessage() {
@@ -580,15 +575,15 @@ public class MainDisplay extends JFrame {
     }
 
     private void sendUserID() {
-        send(new ChatMsg(uid, ChatMsg.MODE_LOGIN));
-        send(new ChatMsg(uid, ChatMsg.MODE_TX_USER, userList));
+        send(new ChatMsg(uid, ChatMsg.MODE_LOGIN)); // 로그인
+        send(new ChatMsg(uid, ChatMsg.MODE_TX_USER, userList)); // 유저 목록
     }
 
     static {
-        USER_COLORS = new Color[]{Color.WHITE, Color.CYAN};
+        USER_COLORS = new Color[]{Color.WHITE, Color.CYAN}; // 순서 색
     }
 
-    public class RoundedLabel extends JPanel {
+    public class RoundedLabel extends JPanel { // 둥근 라벨 생성
         private String userName;
         private String score;
         private Color backgroundColor;
@@ -604,6 +599,7 @@ public class MainDisplay extends JFrame {
             setMaximumSize(new Dimension(190, 100));
         }
 
+        //검색 참고
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D)g;

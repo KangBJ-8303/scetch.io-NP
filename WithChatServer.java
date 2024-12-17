@@ -135,7 +135,7 @@ public class WithChatServer extends JFrame {
         t_display.setCaretPosition(t_display.getDocument().getLength());
     }
 
-    private boolean correctAnswer(String msg) {
+    private boolean correctAnswer(String msg) { // 선택한 단어와 입력한 답이 같은지 확인
         return selectedWord.equals(msg);
     }
 
@@ -160,7 +160,7 @@ public class WithChatServer extends JFrame {
 
                 ChatMsg msg;
                 while((msg = (ChatMsg)in.readObject()) != null) {
-                    if (msg.mode == ChatMsg.MODE_LOGIN) {
+                    if (msg.mode == ChatMsg.MODE_LOGIN) { // 로그인 시 메세지 전송
                         uid = msg.userID;
                         userIDs.add(uid);
 
@@ -169,7 +169,7 @@ public class WithChatServer extends JFrame {
                         ChatMsg joinMessage = new ChatMsg("", ChatMsg.MODE_ENTER, uid + "가 접속했습니다");
                         broadcasting(joinMessage);
                     } else {
-                        if (msg.mode == ChatMsg.MODE_LOGOUT) {
+                        if (msg.mode == ChatMsg.MODE_LOGOUT) { // 로그아웃 시 메세지 전송
                             userScores.remove(uid);
                             userIDs.remove(uid);
                             users.removeElement(this);
@@ -180,37 +180,37 @@ public class WithChatServer extends JFrame {
                             break;
                         }
 
-                        if (msg.mode == ChatMsg.MODE_TX_STRING) {
+                        if (msg.mode == ChatMsg.MODE_TX_STRING) { // 메세지 송수신 및 정답 확인
                             String message = uid + ": " + msg.message;
                             printDisplay(message);
                             broadcasting(msg);
-                            if (selectedWord != null && correctAnswer(msg.message)) {
-                                int uidScore = userScores.get(uid) + 1;
-                                userScores.put(uid, uidScore);
+                            if (selectedWord != null && correctAnswer(msg.message)) { // 단어 선택 되어있고 선택된 단어와 일치시
+                                int uidScore = userScores.get(uid) + 1;//점수증가
+                                userScores.put(uid, uidScore);//증가된 값 입력
                                 String currentDrawerUid = userIDs.get(orderIndex % users.size());
                                 int drawerScore = userScores.get(currentDrawerUid) + 1;
-                                userScores.put(currentDrawerUid, drawerScore);
+                                userScores.put(currentDrawerUid, drawerScore); // 출제자 점수 증가
 
                                 for(String user : userIDs) {
-                                    printDisplay(user + ": " + String.valueOf(userScores.get(user)));
+                                    printDisplay(user + ": " + String.valueOf(userScores.get(user))); // 유저 점수 출력
                                 }
 
                                 ChatMsg addScore = new ChatMsg(uid, ChatMsg.MODE_TX_CORRECT, new HashMap(userScores));
                                 printDisplay(uid + "에게 점수 1점");
-                                printDisplay(currentDrawerUid + "에게 점수 1점");
+                                printDisplay(currentDrawerUid + "에게 점수 1점");// 점수 증가 표시
                                 broadcasting(addScore);
-                                ++orderIndex;
+                                ++orderIndex; // 순서 변경
                                 ChatMsg newOrderMsg = new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex);
                                 broadcasting(newOrderMsg);
                             }
                         } else if (msg.mode == ChatMsg.MODE_TX_IMAGE) {
                             broadcasting(msg);
-                        } else if (msg.mode == ChatMsg.MODE_TX_DRAW) {
+                        } else if (msg.mode == ChatMsg.MODE_TX_DRAW) { // 그림 출력
                             broadcasting(msg);
                             printDisplay("Server x1: " +Integer.toString(msg.x1) + " x2: " + Integer.toString(msg.x2) + " y1: " + Integer.toString(msg.y1) + " y2: " + Integer.toString(msg.y2) + " stroke: " + Float.toString(msg.stroke) +  " shape: " + msg.shapeString);
                         } else if (msg.mode == ChatMsg.MODE_TX_USER) {
                             userScores.put(msg.userID, 0);
-                            for(String user : userIDs) {
+                            for(String user : userIDs) { //유저 목록 출력
                                 printDisplay("userList : " + user);
                             }
 
@@ -218,22 +218,22 @@ public class WithChatServer extends JFrame {
                             broadcasting(userScore);
                             ChatMsg userID = new ChatMsg("", ChatMsg.MODE_TX_USER, new ArrayList(userIDs));
                             broadcasting(userID);
-                        } else if (msg.mode == ChatMsg.MODE_TX_ORDER) {
+                        } else if (msg.mode == ChatMsg.MODE_TX_ORDER) { // 순서 변경
                             orderIndex = msg.order + 1;
-                            ChatMsg newMsg = new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex);
+                            ChatMsg newMsg = new ChatMsg(uid, ChatMsg.MODE_TX_ORDER, orderIndex); // 변경된 정보 전송
                             broadcasting(newMsg);
-                        } else if (msg.mode == ChatMsg.MODE_TX_START) {
+                        } else if (msg.mode == ChatMsg.MODE_TX_START) { // 게임 시작
                             selectedWord = msg.message;
 
                             for(ClientHandler client : users) {
                                 ChatMsg startMsg;
-                                if (client.uid.equals(userIDs.get(orderIndex % users.size()))) {
+                                if (client.uid.equals(userIDs.get(orderIndex % users.size()))) { //출제자는 선택된 문자로 시작
                                     startMsg = new ChatMsg(uid, ChatMsg.MODE_TX_START, selectedWord);
                                     System.out.println("Sending to drawer: " + selectedWord);
-                                } else {
+                                } else { //나머지
                                     StringBuilder hiddenWord = new StringBuilder();
 
-                                    for(int i = 0; i < selectedWord.length(); ++i) {
+                                    for(int i = 0; i < selectedWord.length(); ++i) {// 선택된 문장 길이만큼 글자수 표시
                                         hiddenWord.append("_ ");
                                     }
 
@@ -243,8 +243,8 @@ public class WithChatServer extends JFrame {
 
                                 client.send(startMsg);
                             }
-                        } else if (msg.mode == ChatMsg.MODE_TX_RESET) {
-                            for(String user : userIDs) {
+                        } else if (msg.mode == ChatMsg.MODE_TX_RESET) { // 게임 리셋
+                            for(String user : userIDs) { // 점수 초기화
                                 userScores.put(user, 0);
                             }
 
@@ -253,7 +253,7 @@ public class WithChatServer extends JFrame {
                         }
                     }
                 }
-                printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());
+                printDisplay(uid + " 퇴장. 현재 참가자 수: " + users.size());//퇴장 메세지
             } catch (IOException e) {
                 ChatMsg logoutMessage = new ChatMsg(uid, ChatMsg.MODE_ENTER, uid + "가 나갔습니다.");
                 broadcasting(logoutMessage);
