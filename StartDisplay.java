@@ -40,7 +40,7 @@ public class StartDisplay extends JFrame { // 시작 화면
         Random random = new Random();
         int randomNumber = random.nextInt(90000) + 10000; // 랜덤 5자리 생성
 
-        t_userID = new UnderlineTextField("guest" + randomNumber);
+        t_userID = new UnderlineTextField("guest" + Integer.toString(randomNumber));
         t_userID.setBounds(430, 300, 100, 30); // 원하는 좌표와 크기로 설정
 
         add(t_userID);
